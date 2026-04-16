@@ -55,7 +55,3 @@ python3 -m http.server 8000
 ```
 
 Then open [http://localhost:8000](http://localhost:8000).
-
-## Licence
-
-Licensed under the [Apache License 2.0](http://www.apache.org/licenses/LICENSE-2.0).
