@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="description" content="Interactive group presentations: enter generators and relations to define a group and explore its Cayley graph and table.">
+    <title>Group Presentation Explorer</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div id="app-container">
+        <header>
+            <a href="../tools.html" class="back-link">← Tools</a>
+            <h1>Group Presentation Explorer</h1>
+            <p class="subtitle">Define a group by generators and relations</p>
+        </header>
+
+        <main>
+            <div class="input-section">
+                <div class="control-group">
+                    <label for="example-select">Examples</label>
+                    <select id="example-select">
+                        <option value="">-- Select an Example --</option>
+                    </select>
+                    <p class="help-text">Select a pre-configured example or manually enter your own generators and
+                        relations below.</p>
+                </div>
+
+                <div class="control-group">
+                    <label for="generators-input">Generators</label>
+                    <input type="text" id="generators-input" placeholder="e.g. a, b" value="a, b">
+                    <p class="help-text">Comma separated list of single characters.</p>
+                </div>
+
+                <div class="control-group">
+                    <label for="relations-input">Relations</label>
+                    <input type="text" id="relations-input" placeholder="e.g. a^4, b^2, abab" value="a^4, b^2, abab">
+                    <p class="help-text">Comma separated relations: "abab" means "abab=e", "a^4" means "a^4=e".<br>
+                        You can enter inverses <code>a⁻¹</code> as <code>a^(-1)</code> or <code>A</code>.<br>
+                        <code>[a,b]</code> is shorthand for the commutator <code>aba⁻¹b⁻¹</code>. As a relation this
+                        says that <code>a</code> and <code>b</code> commute.
+                    </p>
+
+                </div>
+
+
+                <button id="analyze-btn" class="btn primary">Analyze Group</button>
+            </div>
+
+            <div id="results-section" class="hidden">
+                <div class="status-bar">
+                    <span id="status-text">Ready</span>
+                </div>
+
+                <div class="result-card">
+                    <h3>Group Order</h3>
+                    <p id="group-order" class="highlight">-</p>
+                    <h3 style="margin-top: 10px" ;>Structure Description</h3>
+                    <p id="group-structure" class="highlight">-</p>
+                </div>
+
+                <div class="result-card">
+                    <h3>Elements (Canonical Words)</h3>
+                    <div id="elements-list" class="scroll-box"></div>
+                </div>
+
+                <div class="result-card full-width" id="cayley-table-section">
+                    <h3>Cayley Table</h3>
+                    <div id="cayley-table-container" class="table-container" aria-live="polite" aria-label="Cayley table for the group"></div>
+                </div>
+
+                <div class="result-card full-width" id="word-problem-section">
+                    <h3>Solve Word Problem</h3>
+                    <div class="control-group">
+                        <label>Check if two words are equal (e.g., "abab" and "ba")</label>
+                        <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                            <input type="text" id="word1-input" placeholder="Word 1" style="flex: 1;">
+                            <input type="text" id="word2-input" placeholder="Word 2" style="flex: 1;">
+                        </div>
+                    </div>
+
+
+                    <button id="check-equality-btn" class="btn secondary">Check Equality</button>
+
+                    <div id="word-problem-result"
+                        style="margin-top: 1rem; padding: 1rem; border-radius: 8px; background: rgba(0,0,0,0.2); min-height: 3rem;">
+                        Waiting for input...
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../../cayley-graph.js"></script>
+    <script src="script.js"></script>
+</body>
+
+</html>

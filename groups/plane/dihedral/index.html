@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<!--
+    Copyright (c) 2026 John Talbot. All rights reserved.
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+            http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+-->
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="description" content="Visualise the dihedral group D_n — the symmetry group of a regular n-gon — with interactive rotations, reflections, and Cayley diagrams.">
+    <title>Regular n-gon Symmetries</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+    <!-- Load 3d-force-graph before Three.js to avoid initialization conflict -->
+    <script src="https://unpkg.com/3d-force-graph"></script>
+    <script>delete window.__THREE__;</script>
+    <!-- Three.js for OrbitControls and main app logic -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+</head>
+
+<body>
+    <div id="canvas-container">
+        <!-- Renderer will be appended here -->
+        <canvas id="overlay-canvas" aria-hidden="true"></canvas>
+        <canvas id="cayley-canvas" aria-label="Interactive 3D Cayley graph (drag to rotate, scroll to zoom)"></canvas>
+    </div>
+
+    <div id="ui-overlay">
+        <div class="panel-handle" aria-hidden="true"></div>
+        <header>
+            <h1>Symmetries of a regular <span id="title-n">n</span>-gon</h1>
+            <p class="subtitle">(The dihedral group D<sub id="n-display">3</sub>)</p>
+            <a href="../index.html" class="back-link">← Plane Symmetries</a>
+        </header>
+
+        <div class="controls-section">
+            <div class="control-group">
+                <button id="subgroup-builder-btn" class="btn subgroup-builder-btn">Subgroup Builder</button>
+            </div>
+            <div id="generator-selector"></div>
+            <div class="control-group" data-subgroup-hide>
+                <h3>Choose n</h3>
+                <div class="n-selector">
+                    <button class="btn n-btn" data-n="3">3</button>
+                    <button class="btn n-btn" data-n="4">4</button>
+                    <button class="btn n-btn" data-n="5">5</button>
+                    <button class="btn n-btn" data-n="6">6</button>
+                    <button class="btn n-btn" data-n="7">7</button>
+                    <button class="btn n-btn" data-n="8">8</button>
+                </div>
+                <div class="custom-n">
+                    <label for="custom-n-input">Custom n:</label>
+                    <input type="number" id="custom-n-input" min="3" max="24" value="3">
+                    <button class="btn" id="set-custom-n">Set</button>
+                </div>
+            </div>
+
+            <div class="control-group" data-subgroup-hide>
+                <h3>View Options</h3>
+                <div class="toggle-row">
+                    <label class="switch">
+                        <input type="checkbox" id="toggle-axes">
+                        <span class="slider round"></span>
+                    </label>
+                    <span>Show Axes</span>
+                </div>
+                <div class="toggle-row">
+                    <label class="switch">
+                        <input type="checkbox" id="toggle-labels" checked>
+                        <span class="slider round"></span>
+                    </label>
+                    <span>Show Vertices</span>
+                </div>
+                <div class="toggle-row">
+                    <label class="switch">
+                        <input type="checkbox" id="toggle-perm">
+                        <span class="slider round"></span>
+                    </label>
+                    <span>Show Permutation</span>
+                </div>
+                <div style="margin-top: 16px; text-align: center;">
+                    <button id="reset-shape" class="btn danger" style="width: 100%">Reset</button>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <h3>Rotations (Order <span id="rotation-order">3</span>)</h3>
+                <p class="info-text">Rotation by 2π/<span id="rotation-divisor">3</span> radians</p>
+                <div class="btn-row">
+                    <button class="btn" id="rotate-cw">r (Anti CW)</button>
+                    <button class="btn" id="rotate-ccw">r⁻¹ (CW)</button>
+                </div>
+                <div class="rotation-power" data-subgroup-hide>
+                    <label for="rotation-power">Power of r:</label>
+                    <input type="number" id="rotation-power" min="1" max="23" value="2">
+                    <button class="btn" id="apply-rotation">Apply r<sup>k</sup></button>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <h3>Reflections (Order 2)</h3>
+                <p class="info-text">Click an axis to reflect</p>
+                <div id="reflection-buttons" class="btn-row">
+                    <!-- Dynamically populated -->
+                </div>
+            </div>
+
+            <div class="control-group" data-subgroup-hide>
+                <h3>Arbitrary Word</h3>
+                <p class="info-text">e.g., e, rs<sub>1</sub>r<sup>2</sup>s<sub>2</sub> (Applied right-to-left)</p>
+                <div class="word-input-row">
+                    <input type="text" id="group-word-input" placeholder="rs1er^2s2"
+                        style="width: 100%; margin-bottom: 8px;">
+                    <button class="btn" id="apply-word" style="width: 100%">Apply Word</button>
+                    <div id="word-error" style="display: none; color: #ff6b6b; margin-top: 8px; font-size: 0.9em;">
+                    </div>
+                </div>
+                <div id="word-progress-display" class="word-progress-display"></div>
+            </div>
+
+            <div class="control-group" data-subgroup-hide>
+                <label for="speed-slider" style="color: #777;">Animation Speed</label>
+                <div style="display:flex;align-items:center;gap:10px;margin-top:10px;">
+                    <input id="speed-slider" type="range" min="1" max="100" value="50" aria-describedby="speed-value" />
+                    <span id="speed-value" style="min-width:48px;text-align:right;">0.15</span>
+                </div>
+            </div>
+
+            <div id="permutation-display" data-subgroup-hide>
+                <p>Permutation: <span id="perm-text">e (Identity)</span></p>
+            </div>
+
+            <div class="control-group" data-subgroup-hide style="margin-top: 5px;">
+                <div class="btn-row">
+                    <button id="show-table-btn" class="btn">Show Table</button>
+                    <button id="test-table-btn" class="btn secondary">Test Yourself</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Cayley Table Modal -->
+    <div id="cayley-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modal-title">Cayley Table</h2>
+                <button class="modal-close" aria-label="Close dialog">&times;</button>
+            </div>
+            <div id="cayley-table-container">
+                <!-- Table injected here -->
+            </div>
+            <div id="modal-footer" class="modal-footer" style="display: none;">
+                <span id="feedback-msg" class="feedback-msg"></span>
+                <button id="check-btn" class="btn active">Check</button>
+                <button id="reveal-btn" class="btn secondary">Reveal</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="../../cayley-graph.js"></script>
+    <script src="script.js"></script>
+    <script>
+    (function () {
+        var overlay = document.getElementById('ui-overlay');
+        var handle = overlay ? overlay.querySelector('.panel-handle') : null;
+        if (!overlay || !handle) return;
+        function toggle() { overlay.classList.toggle('panel-expanded'); }
+        handle.addEventListener('click', toggle);
+        var hdr = overlay.querySelector('header');
+        if (hdr) { hdr.style.cursor = 'pointer'; hdr.addEventListener('click', toggle); }
+        // Auto-hide panel on button press; delay the action until collapse finishes.
+        // Runs in capture phase to fire before Subgroup Builder's stopImmediatePropagation.
+        var controls = overlay.querySelector('.controls-section');
+        if (controls) {
+            controls.addEventListener('click', function (e) {
+                var btn = e.target.closest('.btn');
+                if (!btn || btn.classList.contains('subgroup-builder-btn')) return;
+                if (btn._deferredClick) return;          // re-dispatched — let through
+                if (!overlay.classList.contains('panel-expanded')) return; // already collapsed
+                e.stopImmediatePropagation();
+                e.preventDefault();
+                overlay.classList.remove('panel-expanded');
+                var fired = false;
+                function fire() {
+                    if (fired) return;
+                    fired = true;
+                    btn._deferredClick = true;
+                    btn.click();
+                    btn._deferredClick = false;
+                }
+                controls.addEventListener('transitionend', function onEnd(ev) {
+                    if (ev.propertyName !== 'max-height') return;
+                    controls.removeEventListener('transitionend', onEnd);
+                    fire();
+                });
+                setTimeout(fire, 400); // fallback in case transitionend does not fire
+            }, true);
+        }
+        // On mobile, shift the canvas so the 3D scene is centred above the collapsed panel strip.
+        if (window.matchMedia('(max-width: 640px)').matches) {
+            var cc = document.getElementById('canvas-container');
+            if (cc) {
+                var shift = Math.round(overlay.getBoundingClientRect().height / 2);
+                cc.style.transform = 'translateY(-' + shift + 'px)';
+            }
+        }
+    })();
+    </script>
+</body>
+
+</html>

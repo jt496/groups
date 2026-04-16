@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<!--
+    Copyright (c) 2026 John Talbot. All rights reserved.
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+            http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+-->
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="description" content="Visualise cosets and Lagrange&#39;s theorem: decompose a group into left and right cosets of a chosen subgroup.">
+    <title>Cosets &amp; Lagrange's Theorem</title>
+    <script>
+        window.MathJax = {
+            tex: { inlineMath: [['\\(', '\\)']] },
+            svg: { fontCache: 'global' }
+        };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0f172a;
+            --panel: #1e293b;
+            --accent: #38bdf8;
+            --adim: rgba(56, 189, 248, 0.12);
+            --border: rgba(255, 255, 255, 0.08);
+            --muted: #94a3b8;
+            --text: #f1f5f9;
+            --success: #22c55e;
+            --warn: #fb923c;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        #app {
+            max-width: 1280px;
+            margin: 0 auto;
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--accent);
+            text-decoration: none;
+            font-size: 0.9rem;
+            margin-bottom: 2rem;
+            opacity: 0.8;
+            transition: opacity 0.2s;
+        }
+
+        .back-link:hover {
+            opacity: 1;
+        }
+
+        header {
+            margin-bottom: 1.5rem;
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--accent);
+            margin-bottom: 0.4rem;
+        }
+
+        .subtitle {
+            color: var(--muted);
+            font-size: 1rem;
+        }
+
+        .card {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.25rem 1.5rem;
+            margin-bottom: 1.25rem;
+        }
+
+        h3 {
+            font-size: 0.78rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--muted);
+            margin-bottom: 0.9rem;
+        }
+
+        /* Group selector */
+        label {
+            color: var(--accent);
+            font-weight: 500;
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+
+        select {
+            appearance: none;
+            background: rgba(15, 23, 42, 0.7);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 0.7rem 2.4rem 0.7rem 1rem;
+            color: var(--text);
+            font-family: inherit;
+            font-size: 1rem;
+            width: 100%;
+            cursor: pointer;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2338bdf8'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 0.8rem center;
+            background-size: 1em;
+        }
+
+        select:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        select option,
+        select optgroup {
+            background: #1e293b;
+        }
+
+        /* Layout */
+        .layout {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 1.25rem;
+            align-items: start;
+        }
+
+        @media (max-width: 860px) {
+            .layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Element badges */
+        .elem-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+        }
+
+        .elem-badge {
+            display: inline-block;
+            padding: 0.2rem 0.55rem;
+            border-radius: 6px;
+            font-size: 0.82rem;
+            font-family: monospace;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        /* Subgroup buttons */
+        .sg-level {
+            margin-bottom: 0.6rem;
+        }
+
+        .sg-level-label {
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--muted);
+            margin-bottom: 0.35rem;
+        }
+
+        .sg-btn {
+            display: block;
+            width: 100%;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 0.5rem 0.8rem;
+            color: var(--text);
+            font-family: inherit;
+            font-size: 0.85rem;
+            cursor: pointer;
+            text-align: left;
+            transition: border-color 0.15s;
+            margin-bottom: 0.35rem;
+        }
+
+        .sg-btn:hover {
+            border-color: var(--accent);
+        }
+
+        .sg-btn.active {
+            border-color: var(--accent);
+            background: var(--adim);
+        }
+
+        .sg-order {
+            font-weight: 600;
+            color: var(--accent);
+            margin-right: 0.4rem;
+        }
+
+        .sg-scroll {
+            max-height: 380px;
+            overflow-y: auto;
+            padding-right: 2px;
+        }
+
+        /* Lagrange box */
+        .lagrange-box {
+            background: rgba(56, 189, 248, 0.05);
+            border: 1px solid rgba(56, 189, 248, 0.2);
+            border-radius: 8px;
+            padding: 0.9rem 1.1rem;
+            font-size: 1rem;
+            line-height: 1.6;
+        }
+
+        .normal-badge {
+            display: inline-block;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.88rem;
+            font-weight: 600;
+            margin-top: 0.7rem;
+        }
+
+        .normal-badge.yes {
+            background: rgba(34, 197, 94, 0.15);
+            color: var(--success);
+        }
+
+        .normal-badge.no {
+            background: rgba(251, 146, 60, 0.15);
+            color: var(--warn);
+        }
+
+        .normal-note {
+            margin-top: 0.6rem;
+            font-size: 0.88rem;
+            color: var(--muted);
+            line-height: 1.5;
+        }
+
+        /* Coset lists */
+        .cosets-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        @media (max-width: 600px) {
+            .cosets-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .coset-item {
+            display: flex;
+            align-items: baseline;
+            gap: 0.6rem;
+            padding: 0.45rem 0.7rem;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            margin-bottom: 0.4rem;
+        }
+
+        .coset-label {
+            font-weight: 600;
+            white-space: nowrap;
+            font-size: 0.8rem;
+        }
+
+        .coset-elems {
+            font-family: monospace;
+            line-height: 1.6;
+        }
+
+        .match-badge {
+            margin-left: auto;
+            font-size: 0.72rem;
+            font-weight: 600;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text);
+            white-space: nowrap;
+            opacity: 0.8;
+            font-family: monospace;
+        }
+
+        /* Cayley table */
+        .table-toggle {
+            background: none;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 0.4rem 0.9rem;
+            color: var(--muted);
+            font-family: inherit;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: border-color 0.15s;
+        }
+
+        .table-toggle:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .table-wrap {
+            overflow: auto;
+            max-height: 580px;
+            margin-top: 1rem;
+        }
+
+        table.cayley {
+            border-collapse: collapse;
+            font-size: 0.78rem;
+            font-family: monospace;
+        }
+
+        table.cayley td,
+        table.cayley th {
+            padding: 4px 7px;
+            text-align: center;
+            min-width: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.04);
+        }
+
+        table.cayley th.col-head {
+            background: rgba(56, 189, 248, 0.08);
+            color: var(--accent);
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+
+        table.cayley th.row-head {
+            position: sticky;
+            left: 0;
+            z-index: 0;
+            background: var(--panel);
+            font-weight: 600;
+        }
+
+        table.cayley th.corner {
+            position: sticky;
+            top: 0;
+            left: 0;
+            z-index: 2;
+            background: var(--panel);
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="app">
+        <a href="../lagrange.html" class="back-link">← Lagrange &amp; Subgroups</a>
+
+        <header>
+            <h1>Cosets &amp; Lagrange's Theorem</h1>
+            <p class="subtitle">
+                Choose a group G and a subgroup H to see how H partitions G into left and right cosets,
+                and why |G| = |H| · [G:H].
+            </p>
+        </header>
+
+        <div class="card">
+            <label for="group-select">Group G</label>
+            <select id="group-select">
+                <option value="">— select a group —</option>
+            </select>
+        </div>
+
+        <div id="main-layout" class="layout hidden">
+            <!-- Left column: elements + subgroup picker -->
+            <div>
+                <div class="card">
+                    <h3>Elements of G</h3>
+                    <div id="elem-list" class="elem-list"></div>
+                </div>
+                <div class="card">
+                    <h3>Choose subgroup H</h3>
+                    <div id="subgroup-list" class="sg-scroll"></div>
+                </div>
+            </div>
+
+            <!-- Right column: results -->
+            <div id="result-col" class="hidden">
+                <div class="card" id="lagrange-card">
+                    <h3>Lagrange's Theorem</h3>
+                    <div id="lagrange-box" class="lagrange-box" aria-live="polite" aria-label="Lagrange's theorem statement"></div>
+                    <div id="normal-badge" class="normal-badge"></div>
+                    <div id="normal-note" class="normal-note hidden"></div>
+                </div>
+
+                <div class="card">
+                    <div class="cosets-grid">
+                        <div>
+                            <h3>Left Cosets &nbsp; <span style="text-transform: none;">gH</span></h3>
+                            <div id="left-cosets" aria-live="polite" aria-label="Left cosets"></div>
+                        </div>
+                        <div>
+                            <h3>Right Cosets &nbsp; <span style="text-transform: none;">Hg</span></h3>
+                            <div id="right-cosets" aria-live="polite" aria-label="Right cosets"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card" id="table-card">
+                    <h3>
+                        Cayley Table
+                        <button class="table-toggle" id="table-toggle" style="margin-left:1rem;">Show</button>
+                    </h3>
+                    <p style="font-size:0.82rem;color:var(--muted);">
+                        Elements ordered by left coset; cells coloured by the coset of their product.
+                    </p>
+                    <div id="cayley-wrap" class="table-wrap hidden" aria-live="polite" aria-label="Cayley table coloured by coset"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../group-utils.js"></script>
+    <script>
+        // ─── Colour palette (identity coset = index 0 = first colour) ────────────────
+        const PALETTE = [
+            { bg: 'rgba(56,189,248,0.18)', border: '#38bdf8', text: '#7dd3fc' }, // sky
+            { bg: 'rgba(248,113,113,0.18)', border: '#f87171', text: '#fca5a5' }, // red
+            { bg: 'rgba(52,211,153,0.18)', border: '#34d399', text: '#6ee7b7' }, // emerald
+            { bg: 'rgba(251,191,36,0.18)', border: '#fbbf24', text: '#fcd34d' }, // amber
+            { bg: 'rgba(167,139,250,0.18)', border: '#a78bfa', text: '#c4b5fd' }, // violet
+            { bg: 'rgba(251,146,60,0.18)', border: '#fb923c', text: '#fdba74' }, // orange
+            { bg: 'rgba(244,114,182,0.18)', border: '#f472b6', text: '#f9a8d4' }, // pink
+            { bg: 'rgba(34,211,238,0.18)', border: '#22d3ee', text: '#67e8f9' }, // cyan
+            { bg: 'rgba(163,230,53,0.18)', border: '#a3e635', text: '#bef264' }, // lime
+            { bg: 'rgba(232,121,249,0.18)', border: '#e879f9', text: '#f0abfc' }, // fuchsia
+            { bg: 'rgba(99,102,241,0.18)', border: '#6366f1', text: '#a5b4fc' }, // indigo
+            { bg: 'rgba(20,184,166,0.18)', border: '#14b8a6', text: '#5eead4' }, // teal
+        ];
+
+        // ─── Populate group selector ──────────────────────────────────────────────────
+        (function buildSelector() {
+            const sel = document.getElementById('group-select');
+            let curCat = '';
+            for (const entry of GROUP_CATALOG) {
+                if (entry.cat !== curCat) {
+                    curCat = entry.cat;
+                    const og = document.createElement('optgroup');
+                    og.label = curCat;
+                    sel.appendChild(og);
+                }
+                const opt = document.createElement('option');
+                opt.value = entry.id;
+                opt.textContent = entry.label;
+                sel.lastChild.appendChild(opt);
+            }
+        })();
+
+        // ─── State ────────────────────────────────────────────────────────────────────
+        let G = null;
+        let allSubgroups = [];
+        let activeH = null;
+        let tableVisible = false;
+
+        // ─── Group selection ──────────────────────────────────────────────────────────
+        document.getElementById('group-select').addEventListener('change', function () {
+            const entry = GROUP_CATALOG.find(e => e.id === this.value);
+            if (!entry) return;
+            G = entry.make();
+            allSubgroups = findAllSubgroups(G);
+            activeH = null;
+            tableVisible = false;
+            document.getElementById('table-toggle').textContent = 'Show';
+            document.getElementById('cayley-wrap').classList.add('hidden');
+            renderGroupInfo();
+            renderSubgroupList();
+            document.getElementById('main-layout').classList.remove('hidden');
+            document.getElementById('result-col').classList.add('hidden');
+        });
+
+        function renderGroupInfo() {
+            const list = document.getElementById('elem-list');
+            list.innerHTML = '';
+            for (const lbl of G.elements) {
+                const b = document.createElement('span');
+                b.className = 'elem-badge';
+                b.innerHTML = lbl;
+                list.appendChild(b);
+            }
+        }
+
+        function renderSubgroupList() {
+            const container = document.getElementById('subgroup-list');
+            container.innerHTML = '';
+
+            // Group by order
+            const byOrder = new Map();
+            allSubgroups.forEach((H, i) => {
+                if (!byOrder.has(H.size)) byOrder.set(H.size, []);
+                byOrder.get(H.size).push({ H, i });
+            });
+
+            for (const [ord, entries] of [...byOrder.entries()].sort((a, b) => a[0] - b[0])) {
+                const level = document.createElement('div');
+                level.className = 'sg-level';
+                const lbl = document.createElement('div');
+                lbl.className = 'sg-level-label';
+                lbl.textContent = `Order ${ord}`;
+                level.appendChild(lbl);
+
+                for (const { H, i } of entries) {
+                    const btn = document.createElement('button');
+                    btn.className = 'sg-btn';
+                    btn.dataset.idx = i;
+
+                    const sortedElems = [...H].sort((a, b) => a - b);
+                    const elemStr = sortedElems.map(k => G.elements[k]).join(', ');
+
+                    btn.innerHTML = `<span class="sg-order">|H|=${ord}</span>{${elemStr}}`;
+                    btn.addEventListener('click', () => {
+                        document.querySelectorAll('.sg-btn').forEach(b => b.classList.remove('active'));
+                        btn.classList.add('active');
+                        activeH = H;
+                        renderCosetPanel();
+                    });
+                    level.appendChild(btn);
+                }
+                container.appendChild(level);
+            }
+        }
+
+        // ─── Coset panel ─────────────────────────────────────────────────────────────
+        function renderCosetPanel() {
+            const H = activeH;
+            let leftCosets = computeLeftCosets(G, H);
+            let rightCosets = computeRightCosets(G, H);
+
+            const leftMatched = [leftCosets[0]];
+            const rightMatched = [rightCosets[0]];
+
+            for (let i = 1; i < leftCosets.length; i++) {
+                const lc = leftCosets[i];
+                const matchingRc = rightCosets.find(rc => setsEqual(lc.elements, rc.elements));
+                if (matchingRc) {
+                    leftMatched.push(lc);
+                    rightMatched.push(matchingRc);
+                }
+            }
+
+            const leftUnmatched = leftCosets.slice(1).filter(lc => !leftMatched.includes(lc));
+            const rightUnmatched = rightCosets.slice(1).filter(rc => !rightMatched.includes(rc));
+
+            leftCosets = [...leftMatched, ...leftUnmatched];
+            rightCosets = [...rightMatched, ...rightUnmatched];
+
+            const normal = isNormalSubgroup(leftCosets, rightCosets);
+            const index = G.order / H.size;
+
+            // Build left-coset colour map (coset index → palette entry)
+            const lcColor = i => PALETTE[i % PALETTE.length];
+
+            // Build right-coset colour map: match to left coset where sets are equal
+            let nextColorIdx = leftCosets.length;
+            const rcColor = i => {
+                const rc = rightCosets[i];
+                for (let j = 0; j < leftCosets.length; j++) {
+                    if (setsEqual(leftCosets[j].elements, rc.elements)) return PALETTE[j % PALETTE.length];
+                }
+                return PALETTE[(nextColorIdx++) % PALETTE.length];
+            };
+
+            // Lagrange
+            const lagBox = document.getElementById('lagrange-box');
+            lagBox.innerHTML = `\\( |G| = ${G.order} = ${H.size} \\times ${index} = |H| \\cdot [G:H] \\)`;
+            if (window.MathJax) MathJax.typesetPromise([lagBox]);
+
+            // Normal badge
+            const badge = document.getElementById('normal-badge');
+            const note = document.getElementById('normal-note');
+            if (normal) {
+                badge.textContent = 'H ⊴ G  (normal subgroup)';
+                badge.className = 'normal-badge yes';
+                note.innerHTML = `The ${index} cosets are closed under coset multiplication and form the
+            quotient group G/H of order ${index}.`;
+                note.classList.remove('hidden');
+            } else {
+                badge.textContent = 'H is not normal in G';
+                badge.className = 'normal-badge no';
+                note.innerHTML = 'The left and right cosets differ (see coloured sets below), so H is not normal.';
+                note.classList.remove('hidden');
+            }
+
+            // Left cosets
+            renderCosetList(leftCosets, document.getElementById('left-cosets'), lcColor, 'g', rightCosets);
+            // Right cosets
+            renderCosetList(rightCosets, document.getElementById('right-cosets'), rcColor, 'h', leftCosets);
+
+            // Cayley table (reset visibility)
+            if (G.order <= 20) {
+                document.getElementById('table-card').classList.remove('hidden');
+                document.getElementById('table-toggle').textContent = tableVisible ? 'Hide' : 'Show';
+                if (tableVisible) buildCayleyTable(leftCosets);
+                else document.getElementById('cayley-wrap').innerHTML = '';
+            } else {
+                document.getElementById('table-card').classList.remove('hidden');
+                document.getElementById('table-toggle').textContent = 'Show';
+                document.getElementById('cayley-wrap').innerHTML =
+                    '<p style="color:var(--muted);font-size:0.85rem;padding:0.5rem 0;">Table hidden for groups of order > 20.</p>';
+                tableVisible = false;
+            }
+
+            document.getElementById('result-col').classList.remove('hidden');
+        }
+
+        function renderCosetList(cosets, container, colorFn, side, otherCosets) {
+            container.innerHTML = '';
+            cosets.forEach((coset, ci) => {
+                const col = colorFn(ci);
+                const item = document.createElement('div');
+                item.className = 'coset-item';
+                item.style.background = col.bg;
+                item.style.border = `1px solid ${col.border}`;
+
+                const repr = G.elements[coset.repr];
+                let labelText = ci === 0 ? 'H' : (side === 'g' ? repr + 'H' : 'H' + repr);
+                const labelHTML = `<span class="coset-label" style="text-transform: none; color:${col.text}">${labelText}</span>`;
+
+                const sortedElems = [...coset.elements].sort((a, b) => a - b);
+                const elemsHTML = sortedElems.map(k => `<span style="color:${col.text}">${G.elements[k]}</span>`).join(', ');
+
+                const isBoth = otherCosets && otherCosets.some(oc => setsEqual(coset.elements, oc.elements));
+                let badgeHTML = '';
+                if (isBoth && side === 'h') {
+                    const badgeText = ci === 0 ? 'H = H' : `${repr}H = H${repr}`;
+                    badgeHTML = `<span class="match-badge" title="This right coset is also a left coset">${badgeText}</span>`;
+                }
+
+                item.innerHTML = labelHTML + `<span class="coset-elems">{${elemsHTML}}</span>` + badgeHTML;
+                container.appendChild(item);
+            });
+        }
+
+        // ─── Cayley table ─────────────────────────────────────────────────────────────
+        document.getElementById('table-toggle').addEventListener('click', () => {
+            if (!activeH) return;
+            tableVisible = !tableVisible;
+            document.getElementById('table-toggle').textContent = tableVisible ? 'Hide' : 'Show';
+            const wrap = document.getElementById('cayley-wrap');
+            if (tableVisible) {
+                wrap.classList.remove('hidden');
+                if (G.order <= 20) buildCayleyTable(computeLeftCosets(G, activeH));
+            } else {
+                wrap.classList.add('hidden');
+            }
+        });
+
+        function buildCayleyTable(leftCosets) {
+            // Order: elements grouped by left coset, sorted within each coset
+            const order = leftCosets.flatMap(c => [...c.elements].sort((a, b) => a - b));
+
+            // Map element → coset index
+            const elemCoset = new Array(G.order);
+            leftCosets.forEach((c, ci) => { for (const e of c.elements) elemCoset[e] = ci; });
+
+            const colFn = i => PALETTE[i % PALETTE.length];
+
+            const tbl = document.createElement('table');
+            tbl.className = 'cayley';
+
+            // Header row
+            const trh = document.createElement('tr');
+            const corner = document.createElement('th');
+            corner.className = 'corner';
+            corner.innerHTML = '∘';
+            trh.appendChild(corner);
+            for (const j of order) {
+                const th = document.createElement('th');
+                th.className = 'col-head';
+                th.innerHTML = G.elements[j];
+                const col = colFn(elemCoset[j]);
+                th.style.borderBottom = `2px solid ${col.border}`;
+                trh.appendChild(th);
+            }
+            tbl.appendChild(trh);
+
+            // Body rows
+            for (const i of order) {
+                const tr = document.createElement('tr');
+                const th = document.createElement('th');
+                th.className = 'row-head';
+                th.innerHTML = G.elements[i];
+                const rcol = colFn(elemCoset[i]);
+                th.style.borderRight = `2px solid ${rcol.border}`;
+                tr.appendChild(th);
+
+                for (const j of order) {
+                    const td = document.createElement('td');
+                    const prod = G.table[i][j];
+                    td.innerHTML = G.elements[prod];
+                    const pc = colFn(elemCoset[prod]);
+                    td.style.background = pc.bg;
+                    td.style.color = pc.text;
+                    tr.appendChild(td);
+                }
+                tbl.appendChild(tr);
+            }
+
+            const wrap = document.getElementById('cayley-wrap');
+            wrap.innerHTML = '';
+            wrap.appendChild(tbl);
+            wrap.classList.remove('hidden');
+        }
+    </script>
+</body>
+
+</html>

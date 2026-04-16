@@ -1,0 +1,3492 @@
+<!DOCTYPE html>
+<!--
+    Copyright (c) 2026 John Talbot. All rights reserved.
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+            http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+-->
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="description" content="Visualise permutations and the symmetric group S_n: compose permutations, view cycle notation, and see cycle diagrams.">
+    <title>Permutations in Sₙ - Interactive Demo</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            color: #eee;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 10px;
+            color: #00d9ff;
+            text-shadow: 0 0 10px rgba(0, 217, 255, 0.5);
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #888;
+            margin-bottom: 30px;
+        }
+
+        .controls {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .two-col-inputs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px 30px;
+            align-items: start;
+        }
+
+        /* For Compute and Conjugates tabs, align right column to bottom of left column */
+        .composition-section .two-col-inputs {
+            display: flex;
+            flex-direction: row;
+            gap: 30px;
+            align-items: flex-end;
+        }
+
+        .composition-section .two-col-inputs>div {
+            flex: 1 1 0;
+        }
+
+        @media (max-width: 700px) {
+            body { padding: 10px; }
+
+            .two-col-inputs {
+                grid-template-columns: 1fr;
+            }
+
+            .composition-section .two-col-inputs {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .tab-container {
+                overflow-x: auto;
+                white-space: nowrap;
+                -webkit-overflow-scrolling: touch;
+                padding-bottom: 5px;
+                display: flex;
+            }
+
+            .tab {
+                padding: 8px 12px;
+                flex-shrink: 0;
+            }
+
+            .perm-input input {
+                flex: 1;
+                min-width: 130px;
+                max-width: 100%;
+            }
+
+            .two-row-inputs > div {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .two-row-label {
+                text-align: left;
+                width: auto;
+                margin-bottom: 4px;
+            }
+
+            .visualisation {
+                padding: 15px;
+            }
+
+            .elements-container {
+                gap: 6px;
+            }
+
+            .element-column {
+                flex-shrink: 0;
+            }
+
+            .arrow-container {
+                width: 60px;
+                min-width: 60px;
+                flex-shrink: 1;
+                overflow: hidden;
+            }
+
+            .element {
+                width: 32px;
+                height: 32px;
+                font-size: 14px;
+            }
+
+            .column-label {
+                font-size: 14px;
+            }
+
+            .notation, .result {
+                font-size: 18px;
+                word-wrap: break-word;
+                word-break: break-all;
+            }
+
+            .properties {
+                grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            }
+        }
+
+        .control-row {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        label {
+            font-weight: bold;
+            color: #00d9ff;
+        }
+
+        select,
+        input,
+        button {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+
+        select,
+        input {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #f8fafc;
+        }
+
+        select:focus,
+        input:focus {
+            outline: none;
+            border-color: #00d9ff;
+        }
+
+        button {
+            background: linear-gradient(135deg, #00d9ff 0%, #0099cc 100%);
+            color: white;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            font-weight: bold;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(0, 217, 255, 0.4);
+        }
+
+        button.secondary {
+            background: linear-gradient(135deg, #ff6b6b 0%, #cc5555 100%);
+        }
+
+        button.tertiary {
+            background: linear-gradient(135deg, #6bff6b 0%, #55cc55 100%);
+        }
+
+        .visualisation {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 20px;
+        }
+
+        .elements-container {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            margin: 30px 0;
+            position: relative;
+        }
+
+        .element-column {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .column-label {
+            font-size: 18px;
+            font-weight: bold;
+            color: #00d9ff;
+            margin-bottom: 10px;
+        }
+
+        .element {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .element.source {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a5a 100%);
+            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4);
+        }
+
+        .element.target {
+            background: linear-gradient(135deg, #6bff6b 0%, #5aee5a 100%);
+            box-shadow: 0 4px 15px rgba(107, 255, 107, 0.4);
+        }
+
+        .arrow-container {
+            position: relative;
+            width: 200px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #arrows-canvas {
+            display: block;
+            pointer-events: none;
+        }
+
+        .notation-box {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .notation-box h3 {
+            color: #00d9ff;
+            margin-bottom: 15px;
+        }
+
+        /* Inline product display style in Adj Transpositions result box */
+        #adj-product-inline {
+            color: #6bff6b;
+            font-family: 'Courier New', monospace;
+            font-weight: 700;
+        }
+
+        /* Make only the numeric values stand out for found/crossings */
+        .adj-num {
+            color: #6bff6b;
+            font-family: 'Courier New', monospace;
+            font-weight: 700;
+            font-size: 20px;
+            /* larger default; JS will scale this with n */
+        }
+
+        /* Two-row mapping visualisation */
+        .adj-map {
+            position: relative;
+            height: 180px;
+            margin-top: 12px;
+        }
+
+        .adj-map .adj-top,
+        .adj-map .adj-bottom {
+            position: absolute;
+            left: 0;
+            right: 0;
+            display: block;
+            height: 30px;
+        }
+
+        .adj-map .adj-top {
+            top: 8px;
+        }
+
+        .adj-map .adj-bottom {
+            top: 120px;
+        }
+
+        .adj-map .adj-cell {
+            position: absolute;
+            width: 48px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: #fff;
+            font-family: 'Courier New', monospace;
+        }
+
+        .adj-map svg {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .notation {
+            font-family: 'Courier New', monospace;
+            font-size: 24px;
+            text-align: center;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+
+        .cycle-notation {
+            color: #ffcc00;
+        }
+
+        .two-line-notation {
+            color: #ff6b6b;
+        }
+
+        .two-row-wrap {
+            display: inline-flex;
+            align-items: center;
+            font-family: 'Courier New', monospace;
+            vertical-align: middle;
+            margin: 10px 0;
+        }
+
+        .bracket {
+            font-size: 48px;
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            color: #888;
+            transform: scaleY(1.3);
+            display: inline-block;
+            margin-top: -4px;
+        }
+
+        .matrix-content {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            padding: 0 4px;
+        }
+
+        .matrix-row {
+            display: flex;
+            gap: 6px;
+            font-size: 20px;
+            white-space: pre;
+        }
+
+        .info-section {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .info-section h3 {
+            color: #00d9ff;
+            margin-bottom: 15px;
+        }
+
+        .info-section p {
+            line-height: 1.6;
+            color: #ccc;
+        }
+
+        .composition-section {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .composition-section h3 {
+            color: #00d9ff;
+            margin-bottom: 15px;
+        }
+
+        .perm-input {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin: 10px 0;
+            flex-wrap: wrap;
+        }
+
+        /* Hide horizontal scrollbar for compact control rows while still allowing scroll */
+        .perm-input {
+            -ms-overflow-style: none;
+            /* IE and Edge */
+            scrollbar-width: none;
+            /* Firefox */
+        }
+
+        .perm-input::-webkit-scrollbar {
+            /* WebKit */
+            height: 0px;
+            background: transparent;
+        }
+
+        .perm-input input {
+            width: 200px;
+        }
+
+        .result {
+            margin-top: 15px;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 24px;
+            color: #ffcc00;
+        }
+
+        .properties {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .property {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .property-label {
+            color: #888;
+            font-size: 14px;
+        }
+
+        .property-value {
+            color: #00d9ff;
+            font-size: 20px;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+
+        .highlight {
+            animation: pulse 0.5s ease-in-out;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.2);
+            }
+        }
+
+        .tab-container {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 20px;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            border-radius: 8px 8px 0 0;
+            color: #888;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+
+        .tab.active {
+            background: rgba(0, 217, 255, 0.2);
+            color: #00d9ff;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .example-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+
+        .example-btn {
+            padding: 8px 12px;
+            font-size: 14px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(0, 217, 255, 0.3);
+        }
+
+        .example-btn:hover {
+            background: rgba(0, 217, 255, 0.2);
+        }
+
+        .notation-toggle {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 10px;
+        }
+
+        .notation-toggle button {
+            padding: 8px 15px;
+            font-size: 14px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(0, 217, 255, 0.3);
+        }
+
+        .notation-toggle button.active {
+            background: rgba(0, 217, 255, 0.3);
+            border-color: #00d9ff;
+        }
+
+        .input-group {
+            display: none;
+        }
+
+        .input-group.active {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .two-row-inputs {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .two-row-inputs>div {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .two-row-inputs input {
+            width: 200px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .two-row-label {
+            font-size: 12px;
+            color: #888;
+            width: 130px;
+            text-align: right;
+        }
+
+        /* Custom tooltip for Step+ button */
+        .custom-tooltip {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.85);
+            color: #eee;
+            padding: 4px 8px;
+            border-radius: 3px;
+            font-size: 12px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            pointer-events: none;
+            z-index: 10000;
+            white-space: nowrap;
+            opacity: 0;
+            transition: opacity 0.15s;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .custom-tooltip.visible {
+            opacity: 1;
+        }
+
+        .back-link {
+            display: inline-block;
+            color: #00d9ff;
+            text-decoration: none;
+            font-size: 0.85rem;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+            margin-bottom: 12px;
+        }
+
+        .back-link:hover {
+            opacity: 1;
+        }
+
+        input[type="range"] {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 4px;
+            border-radius: 2px;
+            background: rgba(255, 255, 255, 0.1);
+            outline: none;
+            padding: 0;
+            border: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: var(--accent-color, #38bdf8);
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <a href="../index.html" class="back-link">← Permutations &amp; Integers mod n</a>
+        <h1>Permutations in S<sub>n</sub></h1>
+        <div style="display: flex; justify-content: flex-end; margin-bottom: 10px;">
+            <span style="color: #888; margin-right: 10px;">Signs etc.:</span>
+            <button onclick="toggleSignDisplay()" id="sign-toggle-btn" style="padding: 5px 15px;">Show</button>
+        </div>
+
+        <div class="tab-container">
+            <button class="tab active" onclick="showTab('visualise')">Visualise</button>
+            <button class="tab" onclick="showTab('cycles')">Cycles</button>
+            <button class="tab" onclick="showTab('compute')">Compute</button>
+            <button class="tab" onclick="showTab('conjugates')">Conjugates</button>
+            <button class="tab" onclick="showTab('transposition')">Transpositions</button>
+            <button class="tab" onclick="showTab('adjacent')">Adj Transpositions</button>
+            <button class="tab" onclick="showTab('learn')">Learn</button>
+        </div>
+
+        <!-- Visualisation Tab -->
+        <div id="visualise" class="tab-content active">
+            <div class="controls">
+                <div class="two-col-inputs">
+                    <div>
+                        <div class="control-row">
+                            <label for="n-select">n = </label>
+                            <select id="n-select" onchange="updateN()">
+                                <option value="3">3</option>
+                                <option value="4">4</option>
+                                <option value="5">5</option>
+                                <option value="6" selected>6</option>
+                                <option value="7">7</option>
+                                <option value="8">8</option>
+                                <option value="9">9</option>
+                            </select>
+                            <button class="secondary" onclick="randomPermutation()">Random</button>
+                            <button class="tertiary" onclick="identity()">Identity</button>
+                        </div>
+                        <div class="notation-toggle">
+                            <span style="color: #888; margin-right: 10px;">Input format:</span>
+                            <button class="active" onclick="setInputMode('tworow')" id="tworow-mode-btn">Two-row
+                                notation</button>
+                            <button onclick="setInputMode('cycle')" id="cycle-mode-btn">Cycle notation</button>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="control-row input-group" id="cycle-input-group">
+                            <label for="cycle-input">Cycle notation:</label>
+                            <input type="text" id="cycle-input" placeholder="e.g., (1 2 3)(4 5)" value="(1 2 3 4 5 6)">
+                            <button onclick="applyPermutation()">View</button>
+                        </div>
+                        <div class="control-row input-group active" id="tworow-input-group">
+                            <div class="two-row-inputs">
+                                <div>
+                                    <span class="two-row-label">Top row (domain):</span>
+                                    <input type="text" id="tworow-top" placeholder="1 2 3 4" readonly
+                                        style="background: rgba(0, 0, 0, 0.3); color: #94a3b8;">
+                                </div>
+                                <div>
+                                    <span class="two-row-label">Bottom row (codomain):</span>
+                                    <input type="text" id="tworow-bottom" placeholder="e.g., 2 3 1 4">
+                                </div>
+                            </div>
+                            <button onclick="applyTwoRowPermutation()">View</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="visualisation">
+                <div class="elements-container">
+                    <div class="element-column" id="source-column">
+                        <div class="column-label">Domain</div>
+                    </div>
+                    <div class="arrow-container" id="arrow-container">
+                        <canvas id="arrows-canvas"></canvas>
+                    </div>
+                    <div class="element-column" id="target-column">
+                        <div class="column-label">Codomain</div>
+                    </div>
+                </div>
+
+                <div class="notation-box">
+                    <h3>Notation</h3>
+                    <div class="notation two-line-notation" id="two-line-display"></div>
+                    <div class="notation cycle-notation" id="cycle-display">(1 2 3)</div>
+                    <div class="notation adjacent-notation sign-related" id="adjacent-display"
+                        style="color: #6bff6b; display: none;"></div>
+                </div>
+
+                <div class="properties">
+                    <div class="property">
+                        <div class="property-label">Order</div>
+                        <div class="property-value" id="order-display">3</div>
+                    </div>
+                    <div class="property">
+                        <div class="property-label">Cycle Type</div>
+                        <div class="property-value" id="cycle-type-display">(3)</div>
+                    </div>
+                    <div class="property">
+                        <div class="property-label">Fixed Points</div>
+                        <div class="property-value" id="fixed-display">1</div>
+                    </div>
+                    <div class="property sign-related" style="display: none;">
+                        <div class="property-label">Sign</div>
+                        <div class="property-value" id="sign-display">+1</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+
+        <!-- Compute Tab -->
+        <div id="compute" class="tab-content">
+            <div class="composition-section">
+                <div class="two-col-inputs">
+                    <div>
+                        <div class="control-row">
+                            <label for="compute-n">n = </label>
+                            <select id="compute-n">
+                                <option value="3">3</option>
+                                <option value="4">4</option>
+                                <option value="5">5</option>
+                                <option value="6" selected>6</option>
+                                <option value="7">7</option>
+                                <option value="8">8</option>
+                                <option value="9">9</option>
+                                <option value="10">10</option>
+                                <option value="11">11</option>
+                                <option value="12">12</option>
+                                <option value="13">13</option>
+                                <option value="14">14</option>
+                                <option value="15">15</option>
+                                <option value="16">16</option>
+                            </select>
+                        </div>
+                        <p style="color: #8fd742; margin-bottom: 15px;">
+                            Enter two permutations &sigma; and &tau; in cycle notation.
+                        </p>
+                        <div class="perm-input">
+                            <label>σ = </label>
+                            <input type="text" id="sigma-input" placeholder="e.g., (1 2 3 6)" value="(1 2 3 6)">
+                            <button onclick="randomComputeSigma()">Random</button>
+                        </div>
+                        <div class="perm-input">
+                            <label>τ = </label>
+                            <input type="text" id="tau-input" placeholder="e.g., (3 5)" value="(3 5)">
+                            <button onclick="randomComputeTau()">Random</button>
+                        </div>
+                    </div>
+                    <div>
+
+                        <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px;">
+                            <button onclick="computeComposition()">Compute σ ∘ τ</button>
+                            <button onclick="computeCompositionReverse()">Compute τ ∘ σ</button>
+                            <button onclick="computeInverse()">Compute σ⁻¹</button>
+                        </div>
+                        <div class="perm-input">
+                            <label>k = </label>
+                            <input type="number" id="power-input" placeholder="e.g., 2" value="2" style="width: 80px;">
+                            <button onclick="computePower()">Compute σᵏ</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="result" id="composition-result">
+                    Result will appear here...
+                </div>
+            </div>
+        </div>
+
+        <!-- Conjugates Tab -->
+        <div id="conjugates" class="tab-content">
+            <div class="composition-section">
+                <div class="two-col-inputs">
+                    <div>
+                        <div class="control-row">
+                            <label for="conjugate-n">n = </label>
+                            <select id="conjugate-n">
+                                <option value="3">3</option>
+                                <option value="4">4</option>
+                                <option value="5">5</option>
+                                <option value="6" selected>6</option>
+                                <option value="7">7</option>
+                                <option value="8">8</option>
+                                <option value="9">9</option>
+                                <option value="10">10</option>
+                                <option value="11">11</option>
+                                <option value="12">12</option>
+                                <option value="13">13</option>
+                                <option value="14">14</option>
+                                <option value="15">15</option>
+                                <option value="16">16</option>
+                            </select>
+                        </div>
+                        <p style="color: #8fd742; margin-bottom: 15px;">
+                            Enter &sigma; and &tau; with the same cycle structure.
+                        </p>
+                        <div class="perm-input">
+                            <label>&sigma; = </label>
+                            <input type="text" id="sigma-conj-input" placeholder="e.g., (1 2 3)" value="(1 2 3)">
+                            <button onclick="randomConjugates()">Random (same structure)</button>
+                        </div>
+                        <div class="perm-input">
+                            <label>&tau; = </label>
+                            <input type="text" id="tau-conj-input" placeholder="e.g., (2 3 4)" value="(2 3 4)">
+                        </div>
+                    </div>
+                    <div>
+
+                        <p style="color: #8fd742; margin-bottom: 15px;">
+                            Compute g such that &sigma; = g⁻¹ &tau; g (and hence show that &sigma; and &tau; are
+                            conjugate).
+                        </p>
+                        <button onclick="findConjugatingPermutation()">Compute</button>
+                    </div>
+                </div>
+                <div class="result" id="conjugate-result">
+                    Result will appear here...
+                </div>
+            </div>
+        </div>
+
+        <!-- Transpositions Tab -->
+        <div id="transposition" class="tab-content">
+            <div class="composition-section">
+                <div class="two-col-inputs">
+                    <div>
+                        <div class="control-row">
+                            <label for="trans-n">n = </label>
+                            <select id="trans-n" onchange="updateTransN()">
+                                <option value="3">3</option>
+                                <option value="4">4</option>
+                                <option value="5">5</option>
+                                <option value="6" selected>6</option>
+                                <option value="7">7</option>
+                                <option value="8">8</option>
+                                <option value="9">9</option>
+                                <option value="10">10</option>
+                                <option value="11">11</option>
+                                <option value="12">12</option>
+                            </select>
+                        </div>
+                        <div class="perm-input">
+                            <label>σ = </label>
+                            <input type="text" id="trans-perm-input" placeholder="e.g., (1 2 3)(4 5)" value="(1 2 3 4)">
+                            <button onclick="randomTransPerm()">Random</button>
+                        </div>
+                        <div class="perm-input">
+                            <label>(a b) = </label>
+                            <label style="font-weight: normal; margin-right: 5px;">a:</label>
+                            <input type="number" id="trans-a" min="1" max="6" value="2" style="width: 60px;">
+                            <label style="font-weight: normal; margin-right: 5px;">b:</label>
+                            <input type="number" id="trans-b" min="1" max="6" value="3" style="width: 60px;">
+                            <button onclick="randomTransposition()">Random</button>
+                        </div>
+                    </div>
+                    <div>
+                        <p style="color: #8fd742; margin-bottom: 15px;">
+                            Click to compute (a b) ∘ σ and see how the cycle structure changes.
+                        </p>
+                        <button onclick="applyTransposition()">Apply Transposition</button>
+                    </div>
+                </div>
+                <div class="result" id="trans-result" style="min-height: 200px;">
+                    Result will appear here...
+                </div>
+            </div>
+        </div>
+
+        <!-- Adj Transpositions Tab -->
+        <div id="adjacent" class="tab-content">
+            <div class="composition-section">
+                <div class="two-col-inputs">
+                    <div>
+                        <div class="control-row">
+                            <label for="adj-n">n = </label>
+                            <select id="adj-n" onchange="updateAdjN()">
+                                <option value="3">3</option>
+                                <option value="4">4</option>
+                                <option value="5">5</option>
+                                <option value="6" selected>6</option>
+                                <option value="7">7</option>
+                                <option value="8">8</option>
+                                <option value="9">9</option>
+                                <option value="10">10</option>
+                                <option value="11">11</option>
+                                <option value="12">12</option>
+                                <option value="13">13</option>
+                                <option value="14">14</option>
+                                <option value="15">15</option>
+                                <option value="16">16</option>
+                            </select>
+                        </div>
+                        <p style="color: #8fd742; margin-bottom: 8px;">Enter a permutation (2-row or cycle notation)</p>
+                        <div class="perm-input"
+                            style="display:flex; gap:8px; align-items:center; flex-wrap:nowrap; overflow-x:auto;">
+                            <input type="text" id="adj-perm-input" placeholder="e.g., (1 2 3) or 2 3 1 4"
+                                value="(1 2 3 4 5 6)" style="flex:1 1 240px; min-width:180px;">
+                            <button onclick="randomAdjPermutation()" style="flex:0 0 auto;">Random</button>
+                            <button onclick="applyAdjPermutation()" style="flex:0 0 auto;">Decompose</button>
+                            <button onclick="adjPlay()" id="adj-play-btn" style="flex:0 0 auto;">Play</button>
+                            <button onclick="adjStep()" id="adj-step-btn" style="flex:0 0 auto;" title="">Step
+                                +</button>
+                            <button onclick="adjStepBack()" id="adj-back-btn" style="flex:0 0 auto;">Step -</button>
+                            <label style="margin-left:8px; white-space:nowrap; flex:0 0 auto;">Speed:</label>
+                            <input type="range" id="adj-speed" min="100" max="3000" value="1600"
+                                style="flex:0 0 100px; width:100px;">
+                        </div>
+                    </div>
+                    <div>
+                        <div style="display:flex; gap:8px; align-items:center; margin-bottom:8px;">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="result" id="adj-result" style="min-height:40px;">Sequence will appear here...</div>
+
+                <div style="margin-top:12px;">
+                    <div id="adj-array" style="display:flex; gap:8px; flex-wrap:wrap;"></div>
+                </div>
+
+                <div style="overflow-x: auto; padding-bottom: 15px; width: 100%;">
+                    <div class="adj-map" id="adj-map">
+                        <svg id="adj-map-svg"></svg>
+                        <div class="adj-top" id="adj-top"></div>
+                        <div class="adj-bottom" id="adj-bottom"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cycles Tab -->
+        <div id="cycles" class="tab-content">
+            <div class="composition-section">
+                <div class="two-col-inputs">
+                    <div>
+                        <div class="control-row">
+                            <label for="cycles-n">n = </label>
+                            <select id="cycles-n" onchange="updateCyclesN()">
+                                <option value="3">3</option>
+                                <option value="4">4</option>
+                                <option value="5">5</option>
+                                <option value="6" selected>6</option>
+                                <option value="7">7</option>
+                                <option value="8">8</option>
+                                <option value="9">9</option>
+                                <option value="10">10</option>
+                                <option value="11">11</option>
+                                <option value="12">12</option>
+                            </select>
+                        </div>
+                        <p style="color: #8fd742; margin-bottom: 15px;">
+                            Enter a permutation (2-row or cycle notation)
+                        </p>
+                        <div class="perm-input">
+                            <label>σ = </label>
+                            <input type="text" id="cycles-perm-input"
+                                placeholder="(1 2 3)(4 5) or bottom row like '2 3 1'" value="(1 3 5)(2 4)"
+                                onchange="visualiseCycles()">
+                            <button onclick="randomCyclesPerm()">Random</button>
+                        </div>
+                    </div>
+                    <div>
+                        <!-- <p style="color: #8fd742; margin-bottom: 15px;">
+                            Elements are arranged in a circle. Arrows show σ(i) for each element.
+                        </p> -->
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                            <label style="color: #00d9ff; white-space: nowrap;">Speed:</label>
+                            <input type="range" id="cycles-speed" min="0.1" max="5.0" value="1.0" step="0.1"
+                                style="flex: 1;">
+                            <span id="cycles-speed-label" style="color: #888; width: 40px;">1.0x</span>
+                        </div>
+                        <div style="margin-bottom: 10px;">
+                            <span style="color: #8fd742; font-weight: bold; display: none;">Completed: <span
+                                    id="cycles-step-counter">0</span></span>
+                        </div>
+                        <div style="display: flex; gap: 8px;">
+                            <button onclick="animateCycles()" id="cycles-animate-btn">Animate</button>
+                            <button onclick="resetCycles()" id="cycles-reset-btn" class="secondary">Reset</button>
+                        </div>
+                    </div>
+                </div>
+                <div style="background: rgba(0,0,0,0.3); border-radius: 15px; padding: 20px; margin-top: 20px;">
+                    <canvas id="cycles-canvas" width="700" height="700"
+                        aria-label="Cycle diagram showing the current permutation as arrows between elements"
+                        style="display: block; margin: 0 auto; width: 100%; max-width: 700px; height: auto; aspect-ratio: 1/1;"></canvas>
+                </div>
+                <div class="result" id="cycles-result" style="margin-top: 20px;">
+                </div>
+            </div>
+        </div>
+
+        <!-- Learn Tab -->
+        <div id="learn" class="tab-content">
+            <div class="info-section">
+                <h3>What is S<sub>n</sub>?</h3>
+                <p>
+                    The <strong>symmetric group S<sub>n</sub></strong> is the group of all permutations of n
+                    elements,
+                    with function composition as the group operation. It has n! elements.
+                </p>
+            </div>
+
+            <div class="info-section">
+                <h3>Cycle Notation</h3>
+                <p>
+                    A permutation can be written as a product of disjoint cycles. For example, <code>(1 2 3)</code>
+                    means 1 → 2 → 3 → 1. The notation <code>(1 2 3)(4 5)</code> represents a permutation where
+                    1, 2, 3 cycle among themselves and 4, 5 swap.
+                </p>
+            </div>
+
+            <div class="info-section">
+                <h3>Properties</h3>
+                <p>
+                    <strong>Order:</strong> The smallest positive integer k such that σ<sup>k</sup> = identity.
+                    It equals the LCM of the cycle lengths.
+                </p>
+                <p class="sign-related" style="display: none;">
+                    <strong>Sign:</strong> A permutation is <em>even</em> (+1) if it can be written as a product
+                    of an even number of transpositions, and <em>odd</em> (-1) otherwise.
+                    The sign equals (-1)<sup>n - c</sup> where c is the number of cycles (including fixed points).
+                </p>
+            </div>
+
+            <div class="info-section">
+                <h3>Key Facts</h3>
+                <p>
+                    • |S<sub>n</sub>| = n!<br>
+                    • S<sub>n</sub> is non-abelian for n ≥ 3
+                </p>
+                <p class="sign-related" style="display: none;">
+                    • Every permutation is a product of transpositions<br>
+                    • The alternating group A<sub>n</sub> consists of all even permutations<br>
+                    • |A<sub>n</sub>| = n!/2 for n ≥ 2
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let n = 6;
+        let currentPerm = [1, 2, 3, 4, 5, 6]; // Image of each element (1-indexed internally)
+        let visualTimer = null;
+
+        const colors = [
+            '#FF5252', '#FF8F00', '#FDD835', '#76FF03', '#00C853', '#00BFA5', '#00E5FF', '#651FFF', '#D500F9',
+            '#FF4081', '#C51162', '#7C4DFF', '#536DFE', '#448AFF', '#00BCD4', '#009688'
+        ];
+
+        function showTab(tabId) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelector(`[onclick="showTab('${tabId}')"]`).classList.add('active');
+            document.getElementById(tabId).classList.add('active');
+
+            if (tabId === 'visualise') {
+                // Reset n to 6 if not already
+                const nSelect = document.getElementById('n-select');
+                if (nSelect) {
+                    nSelect.value = '6';
+                }
+                n = 6;
+                // Reset currentPerm to identity
+                currentPerm = Array.from({ length: n }, (_, i) => i + 1);
+                // Reset input fields to default
+                document.getElementById('cycle-input').value = '(1 2 3 4 5 6)';
+                document.getElementById('tworow-bottom').value = currentPerm.join(' ');
+                setInputMode('tworow');
+                updateTwoRowTop();
+                renderVisualisation();
+            }
+        }
+
+        function setInputMode(mode) {
+            document.getElementById('cycle-mode-btn').classList.toggle('active', mode === 'cycle');
+            document.getElementById('tworow-mode-btn').classList.toggle('active', mode === 'tworow');
+            document.getElementById('cycle-input-group').classList.toggle('active', mode === 'cycle');
+            document.getElementById('tworow-input-group').classList.toggle('active', mode === 'tworow');
+
+            // Update the top row to show current n
+            updateTwoRowTop();
+        }
+
+        let signVisible = false;
+
+        function toggleSignDisplay() {
+            signVisible = !signVisible;
+            const elements = document.querySelectorAll('.sign-related');
+            elements.forEach(el => {
+                el.style.display = signVisible ? '' : 'none';
+            });
+            document.getElementById('sign-toggle-btn').textContent = signVisible ? 'Hide' : 'Show';
+        }
+
+        function updateTwoRowTop() {
+            const topRow = Array.from({ length: n }, (_, i) => i + 1).join(' ');
+            document.getElementById('tworow-top').value = topRow;
+        }
+
+        function updateN() {
+            n = parseInt(document.getElementById('n-select').value);
+            currentPerm = Array.from({ length: n }, (_, i) => i + 1);
+            updateTwoRowTop();
+            renderVisualisation();
+        }
+
+        function parseTwoRowNotation(bottomRow) {
+            const elements = bottomRow.trim().split(/[\s,]+/).map(Number);
+            // update numeric sizes to scale with n
+            try { setAdjNumSize(); } catch (e) { }
+
+            if (elements.length !== n) {
+                throw new Error(`Expected ${n} elements, got ${elements.length}.`);
+            }
+
+            if (elements.some(e => isNaN(e) || e < 1 || e > n)) {
+                throw new Error(`All elements must be integers between 1 and ${n}.`);
+            }
+
+            // Check it's a valid permutation (each element appears exactly once)
+            const sorted = [...elements].sort((a, b) => a - b);
+            for (let i = 0; i < n; i++) {
+                if (sorted[i] !== i + 1) {
+                    throw new Error(`Invalid permutation: each of 1 to ${n} must appear exactly once.`);
+                }
+            }
+
+            return elements;
+        }
+
+        function applyTwoRowPermutation() {
+            try {
+                const bottomRow = document.getElementById('tworow-bottom').value;
+                currentPerm = parseTwoRowNotation(bottomRow);
+                document.getElementById('cycle-input').value = permToCycles(currentPerm);
+                renderVisualisation();
+            } catch (e) {
+                alert(e.message);
+            }
+        }
+
+        function parseCycleNotation(str) {
+            // Start with identity
+            let perm = Array.from({ length: n }, (_, i) => i + 1);
+            const cycleRegex = /\(([^)]+)\)/g;
+            let match;
+            const cycles = [];
+
+            // Collect all cycles first
+            while ((match = cycleRegex.exec(str)) !== null) {
+                const elements = match[1].trim().split(/[\s,]+/).map(Number);
+                if (elements.some(e => isNaN(e) || e < 1 || e > n)) {
+                    throw new Error(`Invalid element in cycle. Must be between 1 and ${n}.`);
+                }
+                // Check for repeated values in the cycle
+                const seen = new Set();
+                for (const el of elements) {
+                    if (seen.has(el)) {
+                        throw new Error(`Cycle (${elements.join(' ')}) contains a repeated value: ${el}`);
+                    }
+                    seen.add(el);
+                }
+                cycles.push(elements);
+            }
+
+            // Apply cycles from RIGHT to LEFT (standard mathematical convention)
+            // (1 2 3)(1 4) means: first apply (1 4), then apply (1 2 3)
+            for (let c = cycles.length - 1; c >= 0; c--) {
+                const cycle = cycles[c];
+                if (cycle.length < 2) continue;
+
+                // Create the permutation for this single cycle
+                const cyclePerm = Array.from({ length: n }, (_, i) => i + 1);
+                for (let i = 0; i < cycle.length; i++) {
+                    const from = cycle[i];
+                    const to = cycle[(i + 1) % cycle.length];
+                    cyclePerm[from - 1] = to;
+                }
+
+                // Compose: perm = cyclePerm ∘ perm (apply perm first, then cyclePerm)
+                perm = perm.map(p => cyclePerm[p - 1]);
+            }
+
+            return perm;
+        }
+
+        function permToTwoLine(perm) {
+            const pad = (val) => String(val).padStart(2, ' ');
+            const topRow = Array.from({ length: n }, (_, i) => {
+                const val = i + 1;
+                const color = colors[(val - 1) % colors.length];
+                return `<span style="color: ${color}">${pad(val)}</span>`;
+            }).join(' ');
+            const bottomRow = perm.map(val => {
+                const color = colors[(val - 1) % colors.length];
+                return `<span style="color: ${color}">${pad(val)}</span>`;
+            }).join(' ');
+
+            return `
+                <div class="two-row-wrap">
+                    <div class="bracket">(</div>
+                    <div class="matrix-content">
+                        <div class="matrix-row">${topRow}</div>
+                        <div class="matrix-row">${bottomRow}</div>
+                    </div>
+                    <div class="bracket">)</div>
+                </div>`;
+        }
+
+        function permToCyclesHTML(perm) {
+            if (!perm) return '';
+            const visited = new Array(n).fill(false);
+            const cycles = [];
+            const bracketColor = '#888';
+
+            for (let i = 0; i < n; i++) {
+                if (visited[i]) continue;
+
+                const cycle = [];
+                let j = i;
+                while (!visited[j]) {
+                    visited[j] = true;
+                    cycle.push(j + 1);
+                    j = perm[j] - 1;
+                }
+
+                if (cycle.length > 1) {
+                    cycles.push(cycle);
+                }
+            }
+
+            if (cycles.length === 0) return `<span style="color: ${bracketColor}">e</span>`;
+            return cycles.map(c => {
+                const nodes = c.map(val => `<span style="color: ${colors[(val - 1) % colors.length]}">${val}</span>`).join(' ');
+                return `<span style="color: ${bracketColor}">(</span>${nodes}<span style="color: ${bracketColor}">)</span>`;
+            }).join('');
+        }
+
+        function permToCycles(perm) {
+            const visited = new Array(n).fill(false);
+            const cycles = [];
+
+            for (let i = 0; i < n; i++) {
+                if (visited[i]) continue;
+
+                const cycle = [];
+                let j = i;
+                while (!visited[j]) {
+                    visited[j] = true;
+                    cycle.push(j + 1);
+                    j = perm[j] - 1;
+                }
+
+                if (cycle.length > 1) {
+                    cycles.push(cycle);
+                }
+            }
+
+            if (cycles.length === 0) return 'e (identity)';
+            return cycles.map(c => `(${c.join(' ')})`).join('');
+        }
+
+        function permToAdjacentTranspositions(perm) {
+            // Decompose permutation into adjacent transpositions (i, i+1)
+            // Uses bubble sort approach: track swaps needed to sort the permutation
+            const arr = [...perm];
+            const transpositions = [];
+
+            // Check if identity
+            let isIdentity = true;
+            for (let i = 0; i < n; i++) {
+                if (arr[i] !== i + 1) {
+                    isIdentity = false;
+                    break;
+                }
+            }
+            if (isIdentity) return 'e (identity)';
+
+            // We need to find adjacent transpositions that give us the INVERSE
+            // of the sorting process, since we want σ = product of transpositions
+            // Actually, we simulate: start from identity, apply transpositions to get perm
+
+            // Use the inverse approach: sort perm back to identity, record swaps
+            // Then the same sequence of swaps applied to identity gives perm
+            const working = [...perm];
+
+            // Bubble sort to find the sequence
+            for (let i = 0; i < n; i++) {
+                for (let j = n - 1; j > i; j--) {
+                    if (working[j - 1] > working[j]) {
+                        // Swap positions j-1 and j
+                        [working[j - 1], working[j]] = [working[j], working[j - 1]];
+                        transpositions.push([j, j + 1]); // 1-indexed: positions j and j+1
+                    }
+                }
+            }
+
+            // The transpositions we found sort perm to identity
+            // So perm = (product of transpositions in reverse order)
+            // Actually for adjacent transpositions: σ = t_k ... t_2 t_1 where t_i are the swaps
+            // We need to reverse the order
+            transpositions.reverse();
+
+            if (transpositions.length === 0) return 'e (identity)';
+
+            return transpositions.map(t => `(${t[0]} ${t[1]})`).join('');
+        }
+
+        function getCycleType(perm) {
+            const visited = new Array(n).fill(false);
+            const lengths = [];
+
+            for (let i = 0; i < n; i++) {
+                if (visited[i]) continue;
+
+                let len = 0;
+                let j = i;
+                while (!visited[j]) {
+                    visited[j] = true;
+                    len++;
+                    j = perm[j] - 1;
+                }
+                lengths.push(len);
+            }
+
+            lengths.sort((a, b) => b - a);
+            return `(${lengths.join(', ')})`;
+        }
+
+        function getOrder(perm) {
+            const visited = new Array(n).fill(false);
+            const lengths = [];
+
+            for (let i = 0; i < n; i++) {
+                if (visited[i]) continue;
+
+                let len = 0;
+                let j = i;
+                while (!visited[j]) {
+                    visited[j] = true;
+                    len++;
+                    j = perm[j] - 1;
+                }
+                lengths.push(len);
+            }
+
+            return lcmArray(lengths);
+        }
+
+        function gcd(a, b) {
+            return b === 0 ? a : gcd(b, a % b);
+        }
+
+        function lcm(a, b) {
+            return (a * b) / gcd(a, b);
+        }
+
+        function lcmArray(arr) {
+            return arr.reduce((a, b) => lcm(a, b), 1);
+        }
+
+        function getSign(perm) {
+            const visited = new Array(n).fill(false);
+            let numCycles = 0;
+
+            for (let i = 0; i < n; i++) {
+                if (visited[i]) continue;
+
+                let j = i;
+                while (!visited[j]) {
+                    visited[j] = true;
+                    j = perm[j] - 1;
+                }
+                numCycles++;
+            }
+
+            return (n - numCycles) % 2 === 0 ? '+1 (even)' : '-1 (odd)';
+        }
+
+        function getFixedPoints(perm) {
+            let count = 0;
+            for (let i = 0; i < n; i++) {
+                if (perm[i] === i + 1) count++;
+            }
+            return count;
+        }
+
+        function composePerm(sigma, tau) {
+            // sigma ∘ tau: first apply tau, then sigma
+            return tau.map(t => sigma[t - 1]);
+        }
+
+        function inversePerm(perm) {
+            const inv = new Array(n);
+            for (let i = 0; i < n; i++) {
+                inv[perm[i] - 1] = i + 1;
+            }
+            return inv;
+        }
+
+        function applyPermutation() {
+            try {
+                const input = document.getElementById('cycle-input').value;
+                currentPerm = parseCycleNotation(input);
+                renderVisualisation();
+            } catch (e) {
+                alert(e.message);
+            }
+        }
+
+        function randomPermutation() {
+            currentPerm = Array.from({ length: n }, (_, i) => i + 1);
+            // Fisher-Yates shuffle
+            for (let i = n - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [currentPerm[i], currentPerm[j]] = [currentPerm[j], currentPerm[i]];
+            }
+            document.getElementById('cycle-input').value = permToCycles(currentPerm);
+            renderVisualisation();
+        }
+
+        // Return a random permutation array of size m (1-indexed values)
+        function randomPermArray(m) {
+            const arr = Array.from({ length: m }, (_, i) => i + 1);
+            for (let i = m - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            return arr;
+        }
+
+        // Helpers for the Compute tab: randomize sigma or tau individually
+        function randomComputeSigma() {
+            const compN = parseInt(document.getElementById('compute-n').value);
+            const perm = randomPermArray(compN);
+            const oldN = n;
+            n = compN;
+            document.getElementById('sigma-input').value = permToCycles(perm);
+            n = oldN;
+        }
+
+        function randomComputeTau() {
+            const compN = parseInt(document.getElementById('compute-n').value);
+            const perm = randomPermArray(compN);
+            const oldN = n;
+            n = compN;
+            document.getElementById('tau-input').value = permToCycles(perm);
+            n = oldN;
+        }
+
+        // For Conjugates tab: generate σ random and τ with the same cycle structure
+        function randomConjugates() {
+            const conjN = parseInt(document.getElementById('conjugate-n').value);
+            // random σ
+            const sigma = randomPermArray(conjN);
+            // get cycle structure lengths
+            const cycles = getDisjointCyclesArray(sigma, conjN).map(c => c.length);
+
+            // produce a random permutation whose cycles have the same lengths
+            const labels = randomPermArray(conjN);
+            const tau = Array.from({ length: conjN }, (_, i) => i + 1);
+            let idx = 0;
+            for (let len of cycles) {
+                if (len <= 1) {
+                    // fixed point
+                    const v = labels[idx++];
+                    tau[v - 1] = v;
+                    continue;
+                }
+                const cycleLabels = labels.slice(idx, idx + len);
+                idx += len;
+                for (let i = 0; i < len; i++) {
+                    const from = cycleLabels[i];
+                    const to = cycleLabels[(i + 1) % len];
+                    tau[from - 1] = to;
+                }
+            }
+
+            const oldN = n;
+            n = conjN;
+            document.getElementById('sigma-conj-input').value = permToCycles(sigma);
+            document.getElementById('tau-conj-input').value = permToCycles(tau);
+            n = oldN;
+        }
+
+        // Random permutation helper for Adj Transpositions tab
+        function randomAdjPermutation() {
+            const sel = document.getElementById('adj-n');
+            const m = sel ? parseInt(sel.value) : n;
+            const perm = randomPermArray(m);
+            const oldN = n;
+            n = m;
+            document.getElementById('adj-perm-input').value = permToCycles(perm);
+            n = oldN;
+        }
+
+        function identity() {
+            currentPerm = Array.from({ length: n }, (_, i) => i + 1);
+            document.getElementById('cycle-input').value = '';
+            renderVisualisation();
+        }
+
+        function setExample(example) {
+            document.getElementById('cycle-input').value = example;
+            applyPermutation();
+        }
+
+        function renderVisualisation() {
+            const sourceCol = document.getElementById('source-column');
+            const targetCol = document.getElementById('target-column');
+
+            // Clear previous
+            sourceCol.innerHTML = '<div class="column-label">Domain</div>';
+            targetCol.innerHTML = '<div class="column-label">Codomain</div>';
+
+            // Add elements
+            for (let i = 1; i <= n; i++) {
+                const sourceEl = document.createElement('div');
+                sourceEl.className = 'element source';
+                sourceEl.textContent = i;
+                sourceEl.style.background = `linear-gradient(135deg, ${colors[i - 1]} 0%, ${colors[i - 1]}cc 100%)`;
+                sourceEl.id = `source-${i}`;
+                sourceCol.appendChild(sourceEl);
+
+                const targetEl = document.createElement('div');
+                targetEl.className = 'element target';
+                targetEl.textContent = i;
+                targetEl.style.background = `linear-gradient(135deg, ${colors[i - 1]} 0%, ${colors[i - 1]}cc 100%)`;
+                targetEl.id = `target-${i}`;
+                targetCol.appendChild(targetEl);
+            }
+
+            // Draw arrows after a short delay to ensure elements are rendered
+            if (visualTimer) clearTimeout(visualTimer);
+            const capturedN = n;
+            const capturedPerm = [...currentPerm];
+
+            visualTimer = setTimeout(() => {
+                const arrowContainer = document.getElementById('arrow-container');
+                const sourceCol = document.getElementById('source-column');
+                const canvas = document.getElementById('arrows-canvas');
+                if (!arrowContainer || !sourceCol || !canvas) return;
+
+                // Force arrow container height to match source column
+                const colHeight = sourceCol.getBoundingClientRect().height;
+                arrowContainer.style.height = colHeight + 'px';
+
+                const containerRect = arrowContainer.getBoundingClientRect();
+                const dpr = window.devicePixelRatio || 1;
+                const w = containerRect.width;
+                const h = containerRect.height;
+
+                // Size the canvas for crisp rendering on high-DPI screens
+                canvas.width = w * dpr;
+                canvas.height = h * dpr;
+                canvas.style.width = w + 'px';
+                canvas.style.height = h + 'px';
+
+                const ctx = canvas.getContext('2d');
+                ctx.scale(dpr, dpr);
+                ctx.clearRect(0, 0, w, h);
+
+                for (let i = 1; i <= capturedN; i++) {
+                    const sourceEl = document.getElementById(`source-${i}`);
+                    const targetEl = document.getElementById(`target-${capturedPerm[i - 1]}`);
+                    if (!sourceEl || !targetEl) continue;
+
+                    const sourceRect = sourceEl.getBoundingClientRect();
+                    const targetRect = targetEl.getBoundingClientRect();
+
+                    const startX = 0;
+                    const startY = sourceRect.top - containerRect.top + (sourceRect.height / 2);
+                    const endX = w;
+                    const endY = targetRect.top - containerRect.top + (targetRect.height / 2);
+                    const midX = w / 2;
+
+                    // Draw bezier curve
+                    ctx.beginPath();
+                    ctx.moveTo(startX, startY);
+                    ctx.bezierCurveTo(midX, startY, midX, endY, endX, endY);
+                    ctx.strokeStyle = colors[i - 1];
+                    ctx.lineWidth = 2;
+                    ctx.globalAlpha = 0.8;
+                    ctx.stroke();
+
+                    // Draw arrowhead
+                    const angle = Math.atan2(endY - endY, endX - midX);
+                    const headLen = 8;
+                    ctx.beginPath();
+                    ctx.moveTo(endX, endY);
+                    ctx.lineTo(endX - headLen * Math.cos(angle - Math.PI / 6), endY - headLen * Math.sin(angle - Math.PI / 6));
+                    ctx.lineTo(endX - headLen * Math.cos(angle + Math.PI / 6), endY - headLen * Math.sin(angle + Math.PI / 6));
+                    ctx.closePath();
+                    ctx.fillStyle = colors[i - 1];
+                    ctx.globalAlpha = 0.8;
+                    ctx.fill();
+                }
+                ctx.globalAlpha = 1;
+            }, 300);
+
+            // Update notation displays
+            document.getElementById('cycle-display').innerHTML = permToCyclesHTML(currentPerm);
+            document.getElementById('two-line-display').innerHTML = permToTwoLine(currentPerm);
+            document.getElementById('adjacent-display').textContent = permToAdjacentTranspositions(currentPerm);
+
+            // Update two-row input to match current permutation
+            document.getElementById('tworow-bottom').value = currentPerm.join(' ');
+
+            // Update properties
+            document.getElementById('order-display').textContent = getOrder(currentPerm);
+            document.getElementById('sign-display').textContent = getSign(currentPerm);
+            document.getElementById('cycle-type-display').textContent = getCycleType(currentPerm);
+            document.getElementById('fixed-display').textContent = getFixedPoints(currentPerm);
+        }
+
+        function computeComposition() {
+            try {
+                const compN = parseInt(document.getElementById('compute-n').value);
+                const oldN = n;
+                n = compN;
+
+                const sigma = parseCycleNotation(document.getElementById('sigma-input').value);
+                const tau = parseCycleNotation(document.getElementById('tau-input').value);
+                const result = composePerm(sigma, tau);
+
+                const resultStr = permToCycles(result);
+
+                let signInputsHtml = '';
+                let signResultHtml = '';
+                if (signVisible) {
+                    signInputsHtml = `<div class=\"sign-related\"><br>Sign of σ: ${getSign(sigma)}<br>Sign of τ: ${getSign(tau)}</div>`;
+                    signResultHtml = `<div class=\"sign-related\" style=\"margin-top:10px;\">Sign of σ ∘ τ: ${getSign(result)}</div>`;
+                }
+                document.getElementById('composition-result').innerHTML =
+                    `σ ∘ τ = ${permToCyclesHTML(result)}<br><br>` +
+                    `σ = ${permToCyclesHTML(sigma)}<br>` +
+                    `τ = ${permToCyclesHTML(tau)}<br>` +
+                    signInputsHtml +
+                    `<br>` +
+                    `Verification: for each i, (σ ∘ τ)(i) = σ(τ(i))<br><br>` +
+                    Array.from({ length: n }, (_, i) =>
+                        `${i + 1} → τ(${i + 1}) = ${tau[i]} → σ(${tau[i]}) = ${result[i]}`
+                    ).join('<br>') +
+                    signResultHtml;
+
+                n = oldN;
+            } catch (e) {
+                document.getElementById('composition-result').textContent = 'Error: ' + e.message;
+            }
+        }
+
+        function computeCompositionReverse() {
+            try {
+                const compN = parseInt(document.getElementById('compute-n').value);
+                const oldN = n;
+                n = compN;
+
+                const sigma = parseCycleNotation(document.getElementById('sigma-input').value);
+                const tau = parseCycleNotation(document.getElementById('tau-input').value);
+                const result = composePerm(tau, sigma);
+
+                const resultStr = permToCycles(result);
+                let signInputsHtml = '';
+                let signResultHtml = '';
+                if (signVisible) {
+                    signInputsHtml = `<div class=\"sign-related\"><br>Sign of σ: ${getSign(sigma)}<br>Sign of τ: ${getSign(tau)}</div>`;
+                    signResultHtml = `<div class=\"sign-related\" style=\"margin-top:10px;\">Sign of τ ∘ σ: ${getSign(result)}</div>`;
+                }
+                document.getElementById('composition-result').innerHTML =
+                    `τ ∘ σ = ${permToCyclesHTML(result)}<br><br>` +
+                    `σ = ${permToCyclesHTML(sigma)}<br>` +
+                    `τ = ${permToCyclesHTML(tau)}<br>` +
+                    signInputsHtml +
+                    `<br>` +
+                    `Verification: for each i, (τ ∘ σ)(i) = τ(σ(i))<br><br>` +
+                    Array.from({ length: n }, (_, i) =>
+                        `${i + 1} → σ(${i + 1}) = ${sigma[i]} → τ(${sigma[i]}) = ${result[i]}`
+                    ).join('<br>') +
+                    signResultHtml;
+
+                n = oldN;
+            } catch (e) {
+                document.getElementById('composition-result').textContent = 'Error: ' + e.message;
+            }
+        }
+
+        function computeInverse() {
+            try {
+                const compN = parseInt(document.getElementById('compute-n').value);
+                const oldN = n;
+                n = compN;
+
+                const sigma = parseCycleNotation(document.getElementById('sigma-input').value);
+                const inv = inversePerm(sigma);
+
+                const invStr = permToCycles(inv);
+                let signInputsHtml = '';
+                let signResultHtml = '';
+                if (signVisible) {
+                    signInputsHtml = `<div class=\"sign-related\">Sign of σ: ${getSign(sigma)}</div>`;
+                    signResultHtml = `<div class=\"sign-related\" style=\"margin-top:10px;\">Sign of σ⁻¹: ${getSign(inv)}</div>`;
+                }
+                document.getElementById('composition-result').innerHTML =
+                    `σ = ${permToCyclesHTML(sigma)}<br>` +
+                    signInputsHtml +
+                    `<br>` +
+                    `σ⁻¹  = ${permToCyclesHTML(inv)}<br><br>` +
+                    `Verification: for each i, (σ ∘ σ⁻¹)(i) = σ(σ⁻¹(i))<br><br>` +
+                    Array.from({ length: n }, (_, i) =>
+                        `${i + 1} → σ⁻¹(${i + 1}) = ${inv[i]} → σ(${inv[i]}) = ${sigma[inv[i] - 1]}`
+                    ).join('<br>') + "<br><br>Hence σ ∘ σ⁻¹ = e. (You can check that σ⁻¹ ∘ σ = e as well.)" +
+                    signResultHtml;
+
+                n = oldN;
+            } catch (e) {
+                document.getElementById('composition-result').textContent = 'Error: ' + e.message;
+            }
+        }
+
+        function computePower() {
+            try {
+                const compN = parseInt(document.getElementById('compute-n').value);
+                const oldN = n;
+                n = compN;
+
+                const sigma = parseCycleNotation(document.getElementById('sigma-input').value);
+                let k = parseInt(document.getElementById('power-input').value);
+
+                if (isNaN(k)) {
+                    throw new Error('Power k must be an integer.');
+                }
+
+                const order = getOrder(sigma);
+
+                // Reduce k modulo order to an equivalent exponent in [0, order-1]
+                const goodK = (k % order + order) % order;
+
+                // Compute σ^{goodK} by repeated composition (goodK is non-negative)
+                let result = Array.from({ length: n }, (_, i) => i + 1); // identity
+                for (let i = 0; i < goodK; i++) {
+                    result = composePerm(sigma, result);
+                }
+
+                const inputK = parseInt(document.getElementById('power-input').value);
+                const superscript = inputK < 0 ? `⁻${formatSuperscript(-inputK)}` : formatSuperscript(inputK);
+
+                let signInputsHtml = '';
+                let signResultHtml = '';
+                if (signVisible) {
+                    signInputsHtml = `<div class=\"sign-related\"><br>Sign of σ: ${getSign(sigma)}</div>`;
+                    signResultHtml = `<div class=\"sign-related\" style=\"margin-top:10px;\">Sign of σ${superscript}: ${getSign(result)}</div>`;
+                }
+
+                document.getElementById('composition-result').innerHTML =
+                    `σ${superscript} = ${permToCycles(result)}<br><br>` +
+                    `σ = ${permToCycles(sigma)}<br>` +
+                    signInputsHtml +
+                    `<br>` +
+                    `Order of σ = ${order}<br><br>` +
+                    ((inputK >= order || inputK <= 0) && goodK == 0 ? `Note: σ${superscript} = σ${formatSuperscript(0)} = e (powers reduce mod ${order})` : '') +
+                    ((inputK >= order || inputK <= 0) && goodK !== 0 ? `Note: σ${superscript} = σ${formatSuperscript(goodK)} (powers reduce mod ${order})` : '') +
+                    signResultHtml;
+
+                n = oldN;
+            } catch (e) {
+                document.getElementById('composition-result').textContent = 'Error: ' + e.message;
+            }
+        }
+
+        function findConjugatingPermutation() {
+            try {
+                const conjN = parseInt(document.getElementById('conjugate-n').value);
+                const oldN = n;
+                n = conjN;
+
+                const sigma = parseCycleNotation(document.getElementById('sigma-conj-input').value);
+                const tau = parseCycleNotation(document.getElementById('tau-conj-input').value);
+
+                const cyclesSigma = getDisjointCyclesArray(sigma, n);
+                const cyclesTau = getDisjointCyclesArray(tau, n);
+
+                // Sort cycles by length (primary) and secondary by first element for consistency
+                cyclesSigma.sort((a, b) => b.length - a.length || a[0] - b[0]);
+                cyclesTau.sort((a, b) => b.length - a.length || a[0] - b[0]);
+
+                // Check if cycle structures match
+                const typeSigma = cyclesSigma.map(c => c.length);
+                const typeTau = cyclesTau.map(c => c.length);
+
+                if (JSON.stringify(typeSigma) !== JSON.stringify(typeTau)) {
+                    throw new Error(`Permutations have different cycle structures<br> ${getCycleType(sigma)} vs ${getCycleType(tau)}`);
+                }
+
+                // Construct h: maps elements of cyclesSigma to elements of cyclesTau at same positions
+                const h = new Array(n);
+                for (let i = 0; i < cyclesSigma.length; i++) {
+                    const cSigma = cyclesSigma[i];
+                    const cTau = cyclesTau[i];
+                    for (let j = 0; j < cSigma.length; j++) {
+                        h[cSigma[j] - 1] = cTau[j];
+                    }
+                }
+
+                // Construct visual alignment
+                let alignSigma = "";
+                let alignTau = "";
+                for (let i = 0; i < cyclesSigma.length; i++) {
+                    const cS = cyclesSigma[i];
+                    const cT = cyclesTau[i];
+                    alignSigma += "(";
+                    alignTau += "(";
+                    for (let j = 0; j < cS.length; j++) {
+                        const sVal = cS[j].toString();
+                        const tVal = cT[j].toString();
+                        const width = Math.max(sVal.length, tVal.length);
+                        alignSigma += sVal.padStart(width, ' ') + (j === cS.length - 1 ? "" : " ");
+                        alignTau += tVal.padStart(width, ' ') + (j === cT.length - 1 ? "" : " ");
+                    }
+                    alignSigma += ") ";
+                    alignTau += ") ";
+                }
+
+                const resultStr = permToCycles(h);
+                const hInv = inversePerm(h);
+                const verificationSteps = Array.from({ length: n }, (_, i) => {
+                    const idx = i + 1;
+                    const stage1 = h[i];
+                    const stage2 = tau[stage1 - 1];
+                    const stage3 = hInv[stage2 - 1];
+                    return `${idx} → g(${idx}) = ${stage1} → τ(${stage1}) = ${stage2} → g⁻¹(${stage2}) = ${stage3}`;
+                }).join('\n');
+
+                document.getElementById('conjugate-result').innerHTML =
+                    `Visual alignment (mapping top elements to bottom elements):<br>` +
+                    `<pre style="margin: 10px 0; font-size: 20px; color: #6bff6b;">&sigma;: ${alignSigma}\n&tau;: ${alignTau}   <br><br></pre>` +
+                    `g in two-row notation:<br><br>` +
+                    permToTwoLine(h) +
+                    `<br>Verification: for each i, (g⁻¹ τ g)(i) = g⁻¹(τ(g(i))):<br>` +
+                    `<pre style="margin: 10px 0; font-size: 20px; color: #6bff6b;">${verificationSteps}</pre>` +
+                    `<br>Hence σ = ${permToCyclesHTML(composePerm(hInv, composePerm(tau, h)))} = g⁻¹ τ g.`;
+
+                n = oldN;
+            } catch (e) {
+                document.getElementById('conjugate-result').innerHTML = `<span style="color: #ff6b6b;">Error: ${e.message}</span>`;
+                n = oldN;
+            }
+        }
+
+        function getDisjointCyclesArray(perm, num) {
+            const visited = new Array(num).fill(false);
+            const cycles = [];
+            for (let i = 0; i < num; i++) {
+                if (!visited[i]) {
+                    const cycle = [];
+                    let curr = i;
+                    while (!visited[curr]) {
+                        visited[curr] = true;
+                        cycle.push(curr + 1);
+                        curr = perm[curr] - 1;
+                    }
+                    cycles.push(cycle);
+                }
+            }
+            return cycles;
+        }
+
+        function formatSuperscript(num) {
+            const superscripts = { '0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴', '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹', '-': '⁻' };
+            return String(num).split('').map(c => superscripts[c] || c).join('');
+        }
+
+        // --- Adjacent swaps animation utilities ---
+        let adjSeq = [];
+        let adjWorking = [];
+        let adjIndex = 0;
+        let adjTimer = null;
+        let adjTargetPerm = null;
+
+        function computeAdjacentSwapSequence(perm) {
+            const working = [...perm];
+            const transpositions = [];
+
+            // Bubble-sort working back to identity, recording adjacent swaps
+            for (let i = 0; i < n; i++) {
+                for (let j = n - 1; j > i; j--) {
+                    if (working[j - 1] > working[j]) {
+                        [working[j - 1], working[j]] = [working[j], working[j - 1]];
+                        transpositions.push([j, j + 1]); // positions (1-indexed)
+                    }
+                }
+            }
+
+            // The sequence sorts perm to identity; reverse to get order to apply to identity
+            transpositions.reverse();
+            return transpositions;
+        }
+
+        // --- Two-row mapping visualisation ---
+        let mapLines = [];
+        // small crossing-dot elements for map intersections
+        let mapCrossDots = [];
+        // flag to indicate map lines are animating (used by RAF loop)
+        let adjMapAnimatingFlag = false;
+        // adjMapState holds the current bottom-row values for the map (top maps to adjMapState[i-1])
+        // This lets the map start at the target permutation (σ) when available and be updated
+        // step-by-step as swaps animate.
+        let adjMapState = [];
+        function renderAdjMap() {
+            const container = document.getElementById('adj-map');
+            const topRow = document.getElementById('adj-top');
+            const bottomRow = document.getElementById('adj-bottom');
+            const svg = document.getElementById('adj-map-svg');
+            if (!container || !topRow || !bottomRow || !svg) return;
+
+            topRow.innerHTML = '';
+            bottomRow.innerHTML = '';
+            svg.innerHTML = '';
+
+            // Layout calculations (same as renderAdjArray)
+            const maxWidth = container.clientWidth || (60 * n);
+            const gap = Math.max(60, Math.floor(maxWidth / Math.max(6, n + 1)));
+            const elemSize = 48;
+            const startX = Math.max(10, Math.floor((maxWidth - (n - 1) * gap) / 2));
+
+            const yTop = 8 + 15; // top center
+            // Make the mapping lines longer by placing the bottom row further down
+            const yBottom = 220 + 15; // bottom center (extended)
+
+            // Ensure container/svg are tall enough to show extended lines
+            container.style.height = (yBottom + 40) + 'px';
+            svg.setAttribute('width', container.clientWidth || (60 * n));
+            svg.setAttribute('height', (yBottom + 40));
+
+            // create top and bottom cells
+            for (let i = 1; i <= n; i++) {
+                const x = startX + (i - 1) * gap;
+                const tcell = document.createElement('div');
+                tcell.className = 'adj-cell';
+                tcell.style.left = x + 'px';
+                tcell.style.top = (yTop - 15) + 'px';
+                // hide numeric labels for a cleaner mapping line visualisation
+                tcell.dataset.value = i;
+                tcell.textContent = '';
+                topRow.appendChild(tcell);
+
+                const bcell = document.createElement('div');
+                bcell.className = 'adj-cell';
+                bcell.style.left = x + 'px';
+                bcell.style.top = (yBottom - 15) + 'px';
+                // bottom row shows the VALUES 1..n in fixed positions; lines will point to the value-position
+                bcell.dataset.value = i;
+                bcell.textContent = '';
+                bcell.id = `adj-map-bottom-${i}`;
+                bottomRow.appendChild(bcell);
+            }
+
+            // draw initial lines from top i to bottom position (from adjMapState / adjTargetPerm / adjWorking)
+            mapLines = [];
+            for (let i = 1; i <= n; i++) {
+                const fromX = startX + (i - 1) * gap + elemSize / 2;
+                const toPos = (adjMapState && adjMapState[i - 1] !== undefined)
+                    ? adjMapState[i - 1]
+                    : (adjTargetPerm && adjTargetPerm[i - 1] !== undefined ? adjTargetPerm[i - 1] : (adjWorking && adjWorking[i - 1] !== undefined ? adjWorking[i - 1] : i));
+                const toX = startX + (toPos - 1) * gap + elemSize / 2;
+                const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                line.setAttribute('x1', fromX);
+                line.setAttribute('y1', yTop + 6);
+                line.setAttribute('x2', toX);
+                line.setAttribute('y2', yBottom - 6);
+                line.setAttribute('stroke', '#00d9ff');
+                line.setAttribute('stroke-opacity', '0.7');
+                line.setAttribute('stroke-width', '2');
+                svg.appendChild(line);
+                mapLines.push(line);
+            }
+            // update crossing dots once lines are in place
+            updateMapCrossingDots();
+        }
+
+        // Animate the swapping of endpoints for lines corresponding to indices a and b
+        function animateMapSwap(a, b, duration) {
+            const svg = document.getElementById('adj-map-svg');
+            if (!svg) return Promise.resolve();
+            // recompute layout
+            const container = document.getElementById('adj-map');
+            const maxWidth = container.clientWidth || (60 * n);
+            const gap = Math.max(60, Math.floor(maxWidth / Math.max(6, n + 1)));
+            const elemSize = 48;
+            const startX = Math.max(10, Math.floor((maxWidth - (n - 1) * gap) / 2));
+            const yTop = 8 + 15;
+            const yBottom = 220 + 15;
+
+            // Lines to animate: for top index a and b
+            const indices = [a, b];
+            const anims = [];
+
+            // indicate map animation in progress so crossing-dot loop can run
+            adjMapAnimatingFlag = true;
+            // start the RAF loop that updates crossing dots while animating
+            startMapCrossDotLoop();
+
+            indices.forEach(idx => {
+                const line = mapLines[idx - 1];
+                if (!line) return;
+                // compute start coords
+                const startX1 = parseFloat(line.getAttribute('x1'));
+                const startY1 = parseFloat(line.getAttribute('y1'));
+                const startX2 = parseFloat(line.getAttribute('x2'));
+                const startY2 = parseFloat(line.getAttribute('y2'));
+
+                // compute end coords after swap using adjMapState (current map),
+                // swapping the bottom values for top indices a and b
+                const targetA = (adjMapState && adjMapState[a - 1] !== undefined) ? adjMapState[a - 1] : (adjTargetPerm && adjTargetPerm[a - 1] !== undefined ? adjTargetPerm[a - 1] : (adjWorking && adjWorking[a - 1] !== undefined ? adjWorking[a - 1] : a));
+                const targetB = (adjMapState && adjMapState[b - 1] !== undefined) ? adjMapState[b - 1] : (adjTargetPerm && adjTargetPerm[b - 1] !== undefined ? adjTargetPerm[b - 1] : (adjWorking && adjWorking[b - 1] !== undefined ? adjWorking[b - 1] : b));
+                // After swap, the bottom targets for a and b will be swapped
+                const endForA = targetB;
+                const endForB = targetA;
+
+                const endX2 = startX + (endForA - 1) * gap + elemSize / 2;
+                const endX2_b = startX + (endForB - 1) * gap + elemSize / 2;
+
+                // choose appropriate endX2 depending on which index
+                const finalX2 = (idx === a) ? endX2 : endX2_b;
+
+                // animate attributes via simple JS interpolation
+                const startTime = performance.now();
+                const promise = new Promise(resolve => {
+                    function frame(t) {
+                        const p = Math.min(1, (t - startTime) / duration);
+                        const curX2 = startX2 + (finalX2 - startX2) * p;
+                        const curY2 = startY2 + ((yBottom - 6) - startY2) * 1; // stable
+                        line.setAttribute('x2', curX2);
+                        line.setAttribute('y2', yBottom - 6);
+                        // update crossing dots each frame for smooth feedback
+                        updateMapCrossingDots();
+                        if (p < 1) requestAnimationFrame(frame);
+                        else resolve();
+                    }
+                    requestAnimationFrame(frame);
+                });
+                anims.push(promise);
+            });
+
+            // also update bottom cell labels after animation completes
+            return Promise.all(anims).then(() => {
+                // update adjMapState to reflect the swap (bottom cells remain fixed values)
+                if (!adjMapState || adjMapState.length < n) {
+                    adjMapState = (adjTargetPerm && adjTargetPerm.slice()) || Array.from({ length: n }, (_, i) => i + 1);
+                }
+                const tmp = adjMapState[a - 1];
+                adjMapState[a - 1] = adjMapState[b - 1];
+                adjMapState[b - 1] = tmp;
+                // end map animation loop and update dots one last time
+                adjMapAnimatingFlag = false;
+                updateMapCrossingDots();
+            });
+        }
+
+        // --- Crossing dot utilities for the two-row map ---
+
+        function getLineCoords(line) {
+            return {
+                x1: parseFloat(line.getAttribute('x1')),
+                y1: parseFloat(line.getAttribute('y1')),
+                x2: parseFloat(line.getAttribute('x2')),
+                y2: parseFloat(line.getAttribute('y2'))
+            };
+        }
+
+        // Return intersection point {x,y} or null if segments don't intersect
+        function segmentIntersection(l1, l2) {
+            const a = getLineCoords(l1);
+            const b = getLineCoords(l2);
+            // Line AB: a + s*(b-a), Line CD: c + t*(d-c)
+            const x1 = a.x1, y1 = a.y1, x2 = a.x2, y2 = a.y2;
+            const x3 = b.x1, y3 = b.y1, x4 = b.x2, y4 = b.y2;
+            const denom = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
+            if (Math.abs(denom) < 1e-9) return null; // parallel or nearly
+            const px = ((x1 * y2 - y1 * x2) * (x3 - x4) - (x1 - x2) * (x3 * y4 - y3 * x4)) / denom;
+            const py = ((x1 * y2 - y1 * x2) * (y3 - y4) - (y1 - y2) * (x3 * y4 - y3 * x4)) / denom;
+            // check if within both segments' bounding boxes
+            function between(v, a, b) { return v >= Math.min(a, b) - 1e-6 && v <= Math.max(a, b) + 1e-6; }
+            if (between(px, x1, x2) && between(py, y1, y2) && between(px, x3, x4) && between(py, y3, y4)) {
+                return { x: px, y: py };
+            }
+            return null;
+        }
+
+        // Recompute and (re)draw small red dots at every crossing of mapLines
+        function updateMapCrossingDots() {
+            const svg = document.getElementById('adj-map-svg');
+            if (!svg) return;
+            // remove previous dots
+            mapCrossDots.forEach(d => { try { d.remove(); } catch (e) { } });
+            mapCrossDots = [];
+            // pairwise intersection check
+            for (let i = 0; i < mapLines.length; i++) {
+                for (let j = i + 1; j < mapLines.length; j++) {
+                    const p = segmentIntersection(mapLines[i], mapLines[j]);
+                    if (p) {
+                        const c = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                        c.setAttribute('cx', p.x);
+                        c.setAttribute('cy', p.y);
+                        c.setAttribute('r', '3');
+                        c.setAttribute('fill', '#7C4DFF');
+                        c.setAttribute('fill-opacity', '1');
+                        c.setAttribute('stroke', '#fff');
+                        c.setAttribute('stroke-width', '0.6');
+                        c.setAttribute('class', 'adj-crossing-dot');
+
+                        // Add a subtle pulse animation to radius
+                        try {
+                            const animR = document.createElementNS('http://www.w3.org/2000/svg', 'animate');
+                            animR.setAttribute('attributeName', 'r');
+                            animR.setAttribute('values', '3;5;3');
+                            animR.setAttribute('dur', '0.9s');
+                            animR.setAttribute('repeatCount', 'indefinite');
+                            animR.setAttribute('calcMode', 'spline');
+                            animR.setAttribute('keySplines', '0.4 0 0.2 1;0.4 0 0.2 1');
+                            c.appendChild(animR);
+
+                            const animO = document.createElementNS('http://www.w3.org/2000/svg', 'animate');
+                            animO.setAttribute('attributeName', 'fill-opacity');
+                            animO.setAttribute('values', '1;0.75;1');
+                            animO.setAttribute('dur', '0.9s');
+                            animO.setAttribute('repeatCount', 'indefinite');
+                            c.appendChild(animO);
+                        } catch (e) {
+                            // If browser doesn't support SVG animate, fall back to static dot
+                        }
+
+                        svg.appendChild(c);
+                        mapCrossDots.push(c);
+                    }
+                }
+            }
+        }
+
+        // RAF loop that keeps updating crossing dots while map lines animate
+        function startMapCrossDotLoop() {
+            function loop() {
+                if (!adjMapAnimatingFlag) return;
+                updateMapCrossingDots();
+                requestAnimationFrame(loop);
+            }
+            requestAnimationFrame(loop);
+        }
+
+        function updateAdjN() {
+            const sel = document.getElementById('adj-n');
+            const newN = parseInt(sel.value);
+            // Keep global n in sync for visualisation convenience
+            n = newN;
+            updateTwoRowTop();
+            // reset any existing adj state
+            adjReset();
+            renderVisualisation();
+        }
+
+        function applyAdjPermutation() {
+            try {
+                // stop any running playback/interval and cancel active animations
+                try { adjStopTimer(); } catch (e) { }
+                try {
+                    adjAnimating = false;
+                    const arrContainer = document.getElementById('adj-array');
+                    if (arrContainer && arrContainer.getAnimations) arrContainer.getAnimations().forEach(a => a.cancel());
+                    const svg = document.getElementById('adj-map-svg');
+                    if (svg && svg.getAnimations) svg.getAnimations().forEach(a => a.cancel());
+                } catch (e) { /* non-fatal */ }
+                const input = document.getElementById('adj-perm-input').value.trim();
+                let parsed;
+                if (input.includes('(')) {
+                    parsed = parseCycleNotation(input);
+                } else {
+                    parsed = parseTwoRowNotation(input);
+                }
+                adjTargetPerm = parsed.slice();
+                adjSeq = computeAdjacentSwapSequence(adjTargetPerm);
+                adjWorking = Array.from({ length: n }, (_, i) => i + 1);
+                adjIndex = 0;
+                // initialize map state to the target permutation so the map starts with lines i → σ(i)
+                adjMapState = adjTargetPerm.slice();
+                // Show count and inline product display in the result box
+                // Use dedicated spans for product and terminal message so they don't clobber each other
+                document.getElementById('adj-result').innerHTML = `<span id="adj-found">Found <span class="adj-num">${adjSeq.length}</span> adjacent transpositions.</span><br>Product (applied so far):<br><br><span id="adj-product-inline">e</span><br><br><span id="adj-terminal"></span><br><span id="adj-crossings"></span>`;
+                // adjust numeric font-size to match current n
+                try { setAdjNumSize(); } catch (e) { }
+                // keep inline product in sync
+                const inline = document.getElementById('adj-product-inline');
+                if (inline) inline.textContent = 'e';
+                document.getElementById('adj-array').innerHTML = '';
+                renderAdjArray(adjWorking);
+                // render the two-row mapping alongside
+                renderAdjMap();
+                // indicate we're at the initial state
+                setTerminalMessage('At start');
+                updateCrossings();
+            } catch (e) {
+                alert(e.message);
+            }
+        }
+
+        function renderAdjArray(arr, highlight = []) {
+            const container = document.getElementById('adj-array');
+            container.innerHTML = '';
+            container.style.position = 'relative';
+            // Compute spacing
+            const maxWidth = container.clientWidth || (60 * arr.length);
+            const gap = Math.max(60, Math.floor(maxWidth / Math.max(6, arr.length + 1)));
+            const elemSize = 48;
+            const baseline = 48; // moved down for clearer arc space
+            container.style.height = '160px';
+            const totalWidth = (arr.length - 1) * gap;
+            const startX = Math.max(10, Math.floor((maxWidth - totalWidth) / 2));
+
+            for (let i = 0; i < arr.length; i++) {
+                const x = startX + i * gap;
+                const el = document.createElement('div');
+                el.className = 'adj-circle';
+                el.style.position = 'absolute';
+                el.style.left = x + 'px';
+                el.style.top = baseline + 'px';
+                el.style.width = elemSize + 'px';
+                el.style.height = elemSize + 'px';
+                el.style.borderRadius = '50%';
+                el.style.display = 'flex';
+                el.style.alignItems = 'center';
+                el.style.justifyContent = 'center';
+                el.style.fontWeight = '700';
+                el.style.color = '#111';
+                el.style.boxShadow = '0 4px 8px rgba(0,0,0,0.12)';
+                el.style.background = `linear-gradient(135deg, ${colors[arr[i] - 1]} 0%, ${colors[arr[i] - 1]}cc 100%)`;
+                el.id = `adj-el-${i + 1}`;
+                el.dataset.index = i + 1;
+                el.dataset.value = arr[i];
+                el.textContent = arr[i];
+                if (highlight.includes(i + 1)) {
+                    el.style.outline = '3px solid #fff3b0';
+                    el.style.transform = 'scale(1.04)';
+                }
+                container.appendChild(el);
+            }
+        }
+
+        // Create a fading trail clone that follows the same keyframes and is removed after finishing
+        function createTrail(sourceEl, keyframes, duration) {
+            try {
+                const container = document.getElementById('adj-array');
+                const clone = sourceEl.cloneNode(true);
+                clone.classList.add('adj-trail');
+                clone.style.pointerEvents = 'none';
+                clone.style.zIndex = 800;
+                clone.style.opacity = '0.8';
+                // Remove id so querySelectors don't pick it up
+                clone.id = '';
+                container.appendChild(clone);
+
+                // Build trail keyframes (same transforms, fade out)
+                const trailKeyframes = keyframes.map((kf, idx) => {
+                    const offset = kf.offset !== undefined ? kf.offset : idx / (keyframes.length - 1);
+                    // fade from .6 to 0
+                    const opacity = String(0.6 * (1 - offset));
+                    return { transform: kf.transform, opacity: opacity, offset: offset };
+                });
+
+                const trailAnim = clone.animate(trailKeyframes, { duration: Math.max(180, duration - 40), easing: 'linear', fill: 'forwards' });
+                trailAnim.finished.then(() => {
+                    try { clone.remove(); } catch (e) { /* ignore */ }
+                }).catch(() => { try { clone.remove(); } catch (e) { } });
+            } catch (e) {
+                // non-fatal
+            }
+        }
+
+        // Map slider value to animation duration (ms), inverted so right = faster
+        function getAdjDuration() {
+            const slider = document.getElementById('adj-speed');
+            const val = parseInt(slider.value) || 600;
+            const min = parseInt(slider.min) || 100;
+            const max = parseInt(slider.max) || 2000;
+            // Duration range (ms)
+            const minDur = 90;   // fastest
+            const maxDur = 1400; // slowest
+            const frac = (val - min) / (max - min);
+            // invert fraction: larger slider value => smaller duration
+            const duration = Math.round(maxDur - frac * (maxDur - minDur));
+            return Math.max(40, duration);
+        }
+
+        // Adjust font-size of numeric indicators in Adjacent UI to scale with n
+        function setAdjNumSize() {
+            const elems = document.querySelectorAll('.adj-num');
+            if (!elems || elems.length === 0) return;
+            // Determine effective n from adj-n select if present
+            let sel = document.getElementById('adj-n');
+            let m = (sel && parseInt(sel.value)) ? parseInt(sel.value) : n;
+            // Base size for moderate n (e.g., n=6)
+            const base = 20; // px (increased per request)
+            // Reduce size slightly as n grows. Scale factor: -0.1px per extra element over 9
+            const extra = Math.max(0, m - 9);
+            const size = Math.max(20, Math.round((base - extra * 0.1) * 10) / 10);
+            elems.forEach(e => { e.style.fontSize = size + 'px'; });
+        }
+
+        // Helpers to render product transpositions with numeric spans
+        function formatTranspositionHTML(a, b) {
+            // Wrap the entire transposition (including parentheses) so parentheses
+            // use the same font-size as the numbers.
+            return `<span class="adj-num">(${a} ${b})</span>`;
+        }
+
+        function prependTranspositionToProduct(a, b) {
+            const prodInline = document.getElementById('adj-product-inline');
+            if (!prodInline) return;
+            const current = (prodInline.innerText || prodInline.textContent || '').trim();
+            if (current === 'e' || current === '') {
+                prodInline.innerHTML = formatTranspositionHTML(a, b);
+            } else {
+                prodInline.innerHTML = formatTranspositionHTML(a, b) + prodInline.innerHTML;
+            }
+            try { setAdjNumSize(); } catch (e) { }
+        }
+
+        function removeLeftmostTranspositionFromProduct(a, b) {
+            const prodInline = document.getElementById('adj-product-inline');
+            if (!prodInline) return;
+            let plain = (prodInline.innerText || prodInline.textContent || '');
+            const regex = new RegExp(`^\\(${a} ${b}\\)\\s*`);
+            plain = plain.replace(regex, '').trim();
+            if (!plain) {
+                prodInline.textContent = 'e';
+            } else {
+                // Wrap each transposition group (including parentheses) with adj-num
+                const html = plain.replace(/\(\s*\d+\s+\d+\s*\)/g, function (m) {
+                    return `<span class="adj-num">${m}</span>`;
+                });
+                prodInline.innerHTML = html;
+            }
+            try { setAdjNumSize(); } catch (e) { }
+        }
+
+        // Place or replace terminal markers (Finished! / At start) in the result box
+        function setTerminalMessage(msg) {
+            const resEl = document.getElementById('adj-result');
+            if (!resEl) return;
+            let term = document.getElementById('adj-terminal');
+            if (!term) {
+                // fallback: append a terminal span if not present
+                term = document.createElement('span');
+                term.id = 'adj-terminal';
+                resEl.appendChild(document.createElement('br'));
+                resEl.appendChild(document.createElement('br'));
+                resEl.appendChild(term);
+            }
+            // allow clearing
+            if (!msg) { term.textContent = ''; return; }
+            term.textContent = msg;
+        }
+
+        // Update Step+ button tooltip to show next transposition
+        function updateStepButtonTooltip() {
+            const stepBtn = document.getElementById('adj-step-btn');
+            if (!stepBtn) return;
+
+            let newTitle = '';
+            if (!adjSeq || adjSeq.length === 0) {
+                newTitle = 'No sequence computed';
+            } else if (adjIndex >= adjSeq.length) {
+                newTitle = 'Sequence complete';
+            } else {
+                // Get the next transposition to apply (stored in reverse order)
+                const pair = adjSeq[adjSeq.length - 1 - adjIndex];
+                newTitle = `(${pair[0]} ${pair[1]})`;
+            }
+
+            // Update custom tooltip text
+            stepBtn.dataset.tooltipText = newTitle;
+
+            // If tooltip is currently visible, update it immediately
+            const tooltip = document.getElementById('step-btn-tooltip');
+            if (tooltip && tooltip.classList.contains('visible')) {
+                tooltip.textContent = newTitle;
+            }
+        }
+
+        // Initialize custom tooltip for Step+ button
+        function initStepButtonTooltip() {
+            const stepBtn = document.getElementById('adj-step-btn');
+            if (!stepBtn) return;
+
+            // Create tooltip element
+            const tooltip = document.createElement('div');
+            tooltip.id = 'step-btn-tooltip';
+            tooltip.className = 'custom-tooltip';
+            document.body.appendChild(tooltip);
+
+            // Show tooltip on hover
+            stepBtn.addEventListener('mouseenter', function (e) {
+                const text = stepBtn.dataset.tooltipText || '';
+                tooltip.textContent = text;
+                tooltip.classList.add('visible');
+                updateTooltipPosition(e);
+            });
+
+            // Update position on mouse move
+            stepBtn.addEventListener('mousemove', updateTooltipPosition);
+
+            // Hide tooltip on leave
+            stepBtn.addEventListener('mouseleave', function () {
+                tooltip.classList.remove('visible');
+            });
+
+            function updateTooltipPosition(e) {
+                const x = e.pageX;
+                const y = e.pageY;
+                tooltip.style.left = (x + 10) + 'px';
+                tooltip.style.top = (y - 30) + 'px';
+            }
+        }
+
+        // Update the crossings display (total transpositions found minus applied)
+        function updateCrossings() {
+            const crossEl = document.getElementById('adj-crossings');
+            const resEl = document.getElementById('adj-result');
+            if (!resEl) return;
+            let el = crossEl;
+            if (!el) {
+                // create if missing
+                el = document.createElement('span');
+                el.id = 'adj-crossings';
+                resEl.appendChild(document.createElement('br'));
+                resEl.appendChild(el);
+            }
+            const total = Array.isArray(adjSeq) ? adjSeq.length : 0;
+            const applied = (typeof adjIndex === 'number') ? adjIndex : 0;
+            const crossings = Math.max(0, total - applied);
+            el.innerHTML = `Current number of crossings: <span class="adj-num">${crossings}</span>`;
+            // ensure numeric size is correct for current n
+            try { setAdjNumSize(); } catch (e) { }
+            // update Step+ button tooltip
+            updateStepButtonTooltip();
+        }
+
+        let adjAnimating = false;
+        function adjStep() {
+            if (adjAnimating) return;
+            if (!adjSeq || adjSeq.length === 0) {
+                setTerminalMessage('No sequence computed. Click Decompose first.');
+                return;
+            }
+
+            // If we're already finished, keep showing 'Finished!' and do nothing
+            if (adjIndex >= adjSeq.length) {
+                setTerminalMessage('Finished!');
+                return;
+            }
+
+            // Clear any 'At start' terminal marker when the user steps forward from the start
+            if (adjIndex === 0) setTerminalMessage('');
+
+            // We stored transpositions in display order [t_k, ..., t_1].
+            // To animate correctly we must apply them right-to-left: t_1, t_2, ..., t_k.
+            const pair = adjSeq[adjSeq.length - 1 - adjIndex];
+            const aPos = pair[0];
+            const bPos = pair[1];
+
+            const elA = document.querySelector(`#adj-el-${aPos}`);
+            const elB = document.querySelector(`#adj-el-${bPos}`);
+
+            // If elements are missing, just swap the model and re-render (also update map)
+            if (!elA || !elB) {
+                const tmp = adjWorking[aPos - 1];
+                adjWorking[aPos - 1] = adjWorking[bPos - 1];
+                adjWorking[bPos - 1] = tmp;
+                // Prepend the newly-applied transposition so visual product reads t_k ... t_1
+                prependTranspositionToProduct(aPos, bPos);
+                adjIndex++;
+                renderAdjArray(adjWorking);
+                // also update map state so visual stays consistent
+                if (!adjMapState || adjMapState.length < n) adjMapState = (adjTargetPerm && adjTargetPerm.slice()) || Array.from({ length: n }, (_, i) => i + 1);
+                const tmpm = adjMapState[aPos - 1];
+                adjMapState[aPos - 1] = adjMapState[bPos - 1];
+                adjMapState[bPos - 1] = tmpm;
+                renderAdjMap();
+                if (adjIndex >= adjSeq.length) {
+                    adjStopTimer();
+                }
+                updateCrossings();
+                updateStepButtonTooltip();
+                return;
+            }
+
+            adjAnimating = true;
+            const rectA = elA.getBoundingClientRect();
+            const rectB = elB.getBoundingClientRect();
+            const containerRect = document.getElementById('adj-array').getBoundingClientRect();
+
+            const startAX = rectA.left - containerRect.left;
+            const startAY = rectA.top - containerRect.top;
+            const startBX = rectB.left - containerRect.left;
+            const startBY = rectB.top - containerRect.top;
+
+            const deltaX = startBX - startAX;
+            const arcHeight = Math.max(36, Math.abs(deltaX) / 2);
+            const duration = getAdjDuration();
+
+            // Build many-step keyframes along a semicircular arc for smooth motion
+            const steps = 28; // more steps -> smoother
+            const keyframesA = [];
+            const keyframesB = [];
+            for (let s = 0; s <= steps; s++) {
+                const t = s / steps; // 0..1
+                const xA = deltaX * t;
+                const yA = -Math.sin(Math.PI * t) * arcHeight; // up semicircle
+                const scaleA = 1 + 0.06 * Math.sin(Math.PI * t);
+                keyframesA.push({ transform: `translate(${xA}px, ${yA}px) scale(${scaleA})`, offset: t });
+
+                const xB = -deltaX * t;
+                const yB = Math.sin(Math.PI * t) * arcHeight; // down semicircle
+                const scaleB = 1 + 0.06 * Math.sin(Math.PI * t);
+                keyframesB.push({ transform: `translate(${xB}px, ${yB}px) scale(${scaleB})`, offset: t });
+            }
+
+            elA.style.zIndex = 1000;
+            elB.style.zIndex = 1000;
+
+            // create brief fading trails for both elements
+            createTrail(elA, keyframesA, duration);
+            createTrail(elB, keyframesB, duration);
+
+            // start map animation in parallel so the two-row mapping updates in sync
+            const mapPromise = animateMapSwap(aPos, bPos, duration);
+
+            const animA = elA.animate(keyframesA, { duration: duration, easing: 'linear', fill: 'forwards' });
+            const animB = elB.animate(keyframesB, { duration: duration, easing: 'linear', fill: 'forwards' });
+
+            Promise.all([animA.finished, animB.finished, mapPromise]).then(() => {
+                // After animations, swap values in the model and re-render from model
+                const tmp = adjWorking[aPos - 1];
+                adjWorking[aPos - 1] = adjWorking[bPos - 1];
+                adjWorking[bPos - 1] = tmp;
+
+                // Update product display: prepend this transposition so visual product reads t_k ... t_1
+                prependTranspositionToProduct(aPos, bPos);
+
+                adjIndex++;
+                adjAnimating = false;
+
+                // Re-render to reset positions/ids consistently and update map lines
+                renderAdjArray(adjWorking);
+                renderAdjMap();
+
+                if (adjIndex >= adjSeq.length) {
+                    setTerminalMessage('Finished!');
+                    adjStopTimer();
+                }
+                updateCrossings();
+                updateStepButtonTooltip();
+            }).catch(() => {
+                adjAnimating = false;
+            });
+        }
+
+        function adjStepBack() {
+            if (adjAnimating) return;
+            if (!adjSeq || adjSeq.length === 0) {
+                setTerminalMessage('No sequence computed. Click Decompose first.');
+                return;
+            }
+            if (adjIndex <= 0) {
+                //setTerminalMessage('At start — cannot step back.');
+                return;
+            }
+
+            // If we were at the finished state and user steps back, clear the 'Finished!' marker
+            if (adjSeq && adjIndex >= adjSeq.length) {
+                setTerminalMessage('');
+            }
+
+            // Determine the last-applied transposition (we applied adjIndex of them)
+            const lastAppliedIdx = adjIndex - 1;
+            const pair = adjSeq[adjSeq.length - 1 - lastAppliedIdx];
+            const aPos = pair[0];
+            const bPos = pair[1];
+
+            const elA = document.querySelector(`#adj-el-${aPos}`);
+            const elB = document.querySelector(`#adj-el-${bPos}`);
+
+            // If elements missing, just swap model and map state and re-render
+            if (!elA || !elB) {
+                const tmp = adjWorking[aPos - 1];
+                adjWorking[aPos - 1] = adjWorking[bPos - 1];
+                adjWorking[bPos - 1] = tmp;
+
+                // update product display: remove the leftmost occurrence of this transposition
+                // update product display: remove leftmost occurrence of this transposition
+                removeLeftmostTranspositionFromProduct(aPos, bPos);
+
+                // update map state
+                if (!adjMapState || adjMapState.length < n) adjMapState = (adjTargetPerm && adjTargetPerm.slice()) || Array.from({ length: n }, (_, i) => i + 1);
+                const tmpm = adjMapState[aPos - 1];
+                adjMapState[aPos - 1] = adjMapState[bPos - 1];
+                adjMapState[bPos - 1] = tmpm;
+
+                adjIndex--;
+                renderAdjArray(adjWorking);
+                renderAdjMap();
+                updateCrossings();
+                updateStepButtonTooltip();
+                return;
+            }
+
+            adjAnimating = true;
+            const rectA = elA.getBoundingClientRect();
+            const rectB = elB.getBoundingClientRect();
+            const containerRect = document.getElementById('adj-array').getBoundingClientRect();
+
+            const startAX = rectA.left - containerRect.left;
+            const startAY = rectA.top - containerRect.top;
+            const startBX = rectB.left - containerRect.left;
+            const startBY = rectB.top - containerRect.top;
+
+            const deltaX = startBX - startAX;
+            const arcHeight = Math.max(36, Math.abs(deltaX) / 2);
+            const duration = getAdjDuration();
+
+            const steps = 28;
+            const keyframesA = [];
+            const keyframesB = [];
+            for (let s = 0; s <= steps; s++) {
+                const t = s / steps;
+                const xA = deltaX * t;
+                const yA = -Math.sin(Math.PI * t) * arcHeight;
+                const scaleA = 1 + 0.06 * Math.sin(Math.PI * t);
+                keyframesA.push({ transform: `translate(${xA}px, ${yA}px) scale(${scaleA})`, offset: t });
+
+                const xB = -deltaX * t;
+                const yB = Math.sin(Math.PI * t) * arcHeight;
+                const scaleB = 1 + 0.06 * Math.sin(Math.PI * t);
+                keyframesB.push({ transform: `translate(${xB}px, ${yB}px) scale(${scaleB})`, offset: t });
+            }
+
+            elA.style.zIndex = 1000;
+            elB.style.zIndex = 1000;
+
+            createTrail(elA, keyframesA, duration);
+            createTrail(elB, keyframesB, duration);
+
+            // animate map swap (this will swap adjMapState at end)
+            const mapPromise = animateMapSwap(aPos, bPos, duration);
+
+            const animA = elA.animate(keyframesA, { duration: duration, easing: 'linear', fill: 'forwards' });
+            const animB = elB.animate(keyframesB, { duration: duration, easing: 'linear', fill: 'forwards' });
+
+            Promise.all([animA.finished, animB.finished, mapPromise]).then(() => {
+                // swap model to step back
+                const tmp = adjWorking[aPos - 1];
+                adjWorking[aPos - 1] = adjWorking[bPos - 1];
+                adjWorking[bPos - 1] = tmp;
+
+                // remove transposition from product display (it was prepended)
+                // remove transposition from product display (it was prepended)
+                removeLeftmostTranspositionFromProduct(aPos, bPos);
+
+                adjIndex--;
+                adjAnimating = false;
+
+                renderAdjArray(adjWorking);
+                renderAdjMap();
+
+                if (adjIndex <= 0) {
+                    setTerminalMessage('At start');
+                }
+                updateCrossings();
+                updateStepButtonTooltip();
+            }).catch(() => {
+                adjAnimating = false;
+            });
+        }
+
+        function adjPlay() {
+            if (!adjSeq || adjSeq.length === 0) {
+                setTerminalMessage('No sequence computed. Click Decompose first.');
+                return;
+            }
+            if (adjTimer) {
+                adjStopTimer();
+                return;
+            }
+            const btn = document.getElementById('adj-play-btn');
+            if (btn) btn.textContent = 'Pause';
+
+            const dur = getAdjDuration();
+            const interval = Math.max(30, Math.round(dur * 0.6));
+            adjTimer = setInterval(() => {
+                if (adjIndex >= adjSeq.length) {
+                    adjStopTimer();
+                    return;
+                }
+                adjStep();
+            }, interval);
+        }
+
+        function adjStopTimer() {
+            if (adjTimer) {
+                clearInterval(adjTimer);
+                adjTimer = null;
+            }
+            const btn = document.getElementById('adj-play-btn');
+            if (btn) btn.textContent = 'Play';
+        }
+
+        function adjReset() {
+            adjStopTimer();
+            adjSeq = [];
+            adjWorking = Array.from({ length: n }, (_, i) => i + 1);
+            adjIndex = 0;
+            adjTargetPerm = null;
+            document.getElementById('adj-array').innerHTML = '';
+            renderAdjArray(adjWorking);
+            // reset map state to identity on reset
+            adjMapState = adjWorking.slice();
+            renderAdjMap();
+            const inline = document.getElementById('adj-product-inline');
+            if (inline) inline.textContent = 'e';
+            setTerminalMessage('Reset.');
+            updateCrossings();
+        }
+
+        // --- Transpositions effect utilities ---
+        function updateTransN() {
+            const sel = document.getElementById('trans-n');
+            const newN = parseInt(sel.value);
+            // Update min/max for a and b inputs
+            document.getElementById('trans-a').setAttribute('max', newN);
+            document.getElementById('trans-b').setAttribute('max', newN);
+            // Clamp current values if needed
+            const aInput = document.getElementById('trans-a');
+            const bInput = document.getElementById('trans-b');
+            if (parseInt(aInput.value) > newN) aInput.value = newN;
+            if (parseInt(bInput.value) > newN) bInput.value = newN;
+        }
+
+        function randomTransPerm() {
+            const sel = document.getElementById('trans-n');
+            const m = sel ? parseInt(sel.value) : 6;
+            const perm = randomPermArray(m);
+            const oldN = n;
+            n = m;
+            document.getElementById('trans-perm-input').value = permToCycles(perm);
+            n = oldN;
+        }
+
+        function randomTransposition() {
+            const sel = document.getElementById('trans-n');
+            const m = sel ? parseInt(sel.value) : 6;
+            let a = Math.floor(Math.random() * m) + 1;
+            let b = Math.floor(Math.random() * m) + 1;
+            while (a === b) {
+                b = Math.floor(Math.random() * m) + 1;
+            }
+            document.getElementById('trans-a').value = a;
+            document.getElementById('trans-b').value = b;
+        }
+
+        function applyTransposition() {
+            try {
+                const transN = parseInt(document.getElementById('trans-n').value);
+                const oldN = n;
+                n = transN;
+
+                const sigmaInput = document.getElementById('trans-perm-input').value.trim();
+                const sigma = sigmaInput ? parseCycleNotation(sigmaInput) : Array.from({ length: n }, (_, i) => i + 1);
+
+                const a = parseInt(document.getElementById('trans-a').value);
+                const b = parseInt(document.getElementById('trans-b').value);
+
+                if (isNaN(a) || a < 1 || a > n || isNaN(b) || b < 1 || b > n) {
+                    throw new Error(`a and b must be between 1 and ${n}.`);
+                }
+
+                if (a === b) {
+                    throw new Error('a and b must be different.');
+                }
+
+                // Create transposition (a b)
+                const tau = Array.from({ length: n }, (_, i) => i + 1);
+                tau[a - 1] = b;
+                tau[b - 1] = a;
+
+                // Compute result = tau ∘ sigma
+                const result = composePerm(tau, sigma);
+
+                // Get cycle structures (including all cycles for counting)
+                const allCyclesSigma = getDisjointCyclesArray(sigma, n);
+                const allCyclesResult = getDisjointCyclesArray(result, n);
+
+                // Get non-trivial cycles (length > 1) for display
+                const cyclesSigma = allCyclesSigma.filter(c => c.length > 1);
+                const cyclesResult = allCyclesResult.filter(c => c.length > 1);
+
+                // Format cycles for display
+                const sigmaCycleStr = cyclesSigma.length > 0 ? cyclesSigma.map(c => `(${c.join(' ')})`).join('') : 'e';
+                const resultCycleStr = cyclesResult.length > 0 ? cyclesResult.map(c => `(${c.join(' ')})`).join('') : 'e';
+
+                // Determine the effect (using total cycle count including 1-cycles)
+                let effectDescription = '';
+                const cycleDiff = allCyclesResult.length - allCyclesSigma.length;
+
+                if (cycleDiff === 1) {
+                    effectDescription = `<span style="color: #ff6b6b; font-weight: bold;">Split:</span> One cycle was split into two cycles.`;
+                } else if (cycleDiff === -1) {
+                    effectDescription = `<span style="color: #6bff6b; font-weight: bold;">Merge:</span> Two cycles were merged into one cycle.`;
+                } else if (cycleDiff === 0) {
+                    // Check if a and b are in the same cycle in sigma
+                    let inSameCycle = false;
+                    let sameCycleLength = 0;
+                    for (let cycle of allCyclesSigma) {
+                        if (cycle.includes(a) && cycle.includes(b)) {
+                            inSameCycle = true;
+                            sameCycleLength = cycle.length;
+                            break;
+                        }
+                    }
+                    if (inSameCycle && sameCycleLength > 1) {
+                        effectDescription = `<span style="color: #ffcc00; font-weight: bold;">Split & Merge:</span> Elements in the same cycle; the cycle was split and then parts merged with other cycles.`;
+                    } else {
+                        effectDescription = `<span style="color: #ffcc00; font-weight: bold;">Swap:</span> Elements ${a} and ${b} were swapped between different cycles (or are both fixed points).`;
+                    }
+                } else {
+                    effectDescription = `<span style="color: #00d9ff; font-weight: bold;">Rearrangement:</span> Cycles were rearranged.`;
+                }
+
+                // Highlight the elements a and b in the cycle notation
+                // We need to be careful to only match numbers in the cycle notation, not in HTML attributes
+                const highlightElements = (str, a, b) => {
+                    // Replace numbers that are preceded by space, (, or start of string
+                    // and followed by space, ), or end of string
+                    let result = str.replace(new RegExp(`([(\\s]|^)(${a})([)\\s]|$)`, 'g'),
+                        `$1<span style="background-color: rgba(255,107,107,0.3); padding: 2px 4px; border-radius: 3px;">$2</span>$3`);
+                    result = result.replace(new RegExp(`([(\\s]|^)(${b})([)\\s]|$)`, 'g'),
+                        `$1<span style="background-color: rgba(107,255,107,0.3); padding: 2px 4px; border-radius: 3px;">$2</span>$3`);
+                    return result;
+                };
+
+                document.getElementById('trans-result').innerHTML = `
+                    <div style="margin-bottom: 20px;">
+                        <strong style="color: #00d9ff;">Original permutation σ:</strong><br>
+                        <span style="font-size: 28px; color: #ffcc00;">${highlightElements(sigmaCycleStr, a, b)}</span><br>
+                        <span style="color: #888;">Number of cycles (including 1-cycles): ${allCyclesSigma.length}</span>
+                    </div>
+                    <div style="margin-bottom: 20px;">
+                        <strong style="color: #00d9ff;">Transposition:</strong><br>
+                        <span style="font-size: 28px; color: #ff6b6b;">(${a} ${b})</span>
+                    </div>
+                    <div style="margin-bottom: 20px;">
+                        <strong style="color: #00d9ff;">Result (${a} ${b}) ∘ σ:</strong><br>
+                        <span style="font-size: 28px; color: #6bff6b;">${highlightElements(resultCycleStr, a, b)}</span><br>
+                        <span style="color: #888;">Number of cycles (including 1-cycles): ${allCyclesResult.length}</span>
+                    </div>
+                    <div style="background: rgba(0,0,0,0.3); padding: 15px; border-radius: 8px; margin-top: 20px;">
+                        <strong style="color: #00d9ff;">Effect:</strong><br>
+                        ${effectDescription}<br><br>
+                        <span style="color: #888;">Cycle count changed from ${allCyclesSigma.length} to ${allCyclesResult.length}.</span><br>
+                        <span style="color: #888;">Parity of cycle count: ${allCyclesSigma.length % 2 === 0 ? 'even' : 'odd'} → ${allCyclesResult.length % 2 === 0 ? 'even' : 'odd'}</span>
+                    </div>
+                    <div style="background: rgba(0,217,255,0.1); padding: 15px; border-radius: 8px; margin-top: 15px;">
+                        <strong style="color: #00d9ff;">Key Insight:</strong><br>
+                        <span style="color: #ccc;">Multiplying by a transposition always changes the parity of the cycle count.</span>
+                    </div>
+                `;
+
+                n = oldN;
+            } catch (e) {
+                document.getElementById('trans-result').innerHTML = `<span style="color: #ff6b6b;">Error: ${e.message}</span>`;
+            }
+        }
+
+        // ==================== Cycles Tab Functions ====================
+
+        let cyclesN = 6;
+        let cyclesPerm = null;
+        let cyclesAnimationId = null;
+        let cyclesStepCount = 0; // Cumulative step counter
+        let isCyclesPaused = false;
+        let cyclesTotalProgressOffset = 0;
+        let cyclesLastTime = 0;
+
+        function updateCyclesN() {
+            cyclesN = parseInt(document.getElementById('cycles-n').value);
+            if (cyclesPerm) {
+                visualiseCycles();
+            }
+        }
+
+        // Update speed label when slider changes
+        document.addEventListener('DOMContentLoaded', function () {
+            const speedSlider = document.getElementById('cycles-speed');
+            const speedLabel = document.getElementById('cycles-speed-label');
+            if (speedSlider && speedLabel) {
+                speedSlider.addEventListener('input', function () {
+                    speedLabel.textContent = parseFloat(this.value).toFixed(1) + 'x';
+                });
+            }
+        });
+
+        function randomCyclesPerm() {
+            const perm = Array.from({ length: cyclesN }, (_, i) => i + 1);
+            for (let i = perm.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [perm[i], perm[j]] = [perm[j], perm[i]];
+            }
+            const oldN = n;
+            n = cyclesN;
+            const cycles = getDisjointCyclesArray(perm, cyclesN).filter(c => c.length > 1);
+            const cycleStr = cycles.length > 0 ? cycles.map(c => `(${c.join(' ')})`).join('') : 'e';
+            n = oldN;
+            document.getElementById('cycles-perm-input').value = cycleStr;
+            visualiseCycles();
+        }
+
+        function visualiseCycles() {
+            try {
+                if (cyclesAnimationId) {
+                    cancelAnimationFrame(cyclesAnimationId);
+                    cyclesAnimationId = null;
+                }
+                isCyclesPaused = false;
+                cyclesTotalProgressOffset = 0;
+                document.getElementById('cycles-animate-btn').textContent = 'Animate';
+
+                const oldN = n;
+                n = cyclesN;
+
+                const input = document.getElementById('cycles-perm-input').value.trim();
+                if (!input) {
+                    cyclesPerm = Array.from({ length: cyclesN }, (_, i) => i + 1);
+                } else if (input.includes('(')) {
+                    // cycle notation
+                    cyclesPerm = parseCycleNotation(input);
+                } else {
+                    // treat as two-row bottom row (space/comma-separated values)
+                    cyclesPerm = parseTwoRowNotation(input);
+                }
+
+                drawCyclesVisualisation(cyclesPerm, 1.0);
+
+                n = oldN;
+
+                // Update result display
+                const allCycles = getDisjointCyclesArray(cyclesPerm, cyclesN);
+                const nonTrivialCycles = allCycles.filter(c => c.length > 1);
+                const cycleStr = nonTrivialCycles.length > 0 ? nonTrivialCycles.map(c => `(${c.join(' ')})`).join('') : 'e';
+
+                document.getElementById('cycles-result').innerHTML = `
+                    <div style="margin-bottom: 20px;">
+                        <strong style="color: #00d9ff;">Disjoint Cycle Decomposition:</strong><br>
+                        <span style="font-size: 28px; color: #ffcc00;">${cycleStr}</span><br>
+                        <span style="color: #888;">Number of cycles: ${nonTrivialCycles.length} non-trivial, ${allCycles.length} total (including fixed points)</span>
+                    </div>
+                `;
+            } catch (e) {
+                document.getElementById('cycles-result').innerHTML = `<span style="color: #ff6b6b;">Error: ${e.message}</span>`;
+            }
+        }
+
+        function resetCycles() {
+            if (cyclesAnimationId) {
+                cancelAnimationFrame(cyclesAnimationId);
+                cyclesAnimationId = null;
+            }
+            isCyclesPaused = false;
+            cyclesTotalProgressOffset = 0;
+            cyclesStepCount = 0;
+            const btn = document.getElementById('cycles-animate-btn');
+            if (btn) btn.textContent = 'Animate';
+
+            const counter = document.getElementById('cycles-step-counter');
+            if (counter) counter.textContent = '0';
+
+            if (cyclesPerm) {
+                drawCyclesVisualisation(cyclesPerm, 1.0);
+            }
+        }
+
+        function animateCycles() {
+            if (!cyclesPerm) {
+                visualiseCycles();
+                return;
+            }
+
+            const btn = document.getElementById('cycles-animate-btn');
+
+            if (cyclesAnimationId) {
+                // Currently animating, so Pause
+                cancelAnimationFrame(cyclesAnimationId);
+                cyclesAnimationId = null;
+                isCyclesPaused = true;
+                btn.textContent = 'Resume';
+                return;
+            }
+
+            // Get total steps for LCM calculation
+            const oldN = n;
+            n = cyclesN;
+            const cycles = getDisjointCyclesArray(cyclesPerm, cyclesN);
+            n = oldN;
+            const cycleLengths = cycles.map(c => c.length);
+            const gcd = (a, b) => b === 0 ? a : gcd(b, a % b);
+            const lcm = (a, b) => (a * b) / gcd(a, b);
+            const totalSteps = cycleLengths.reduce(lcm, 1);
+
+            const pauseDuration = 0.20; // 30% pause at each step
+            const moveDuration = 1 - pauseDuration;
+
+            function animate() {
+                const now = Date.now();
+                const delta = now - cyclesLastTime;
+                cyclesLastTime = now;
+
+                // Allow variable speed even while running
+                const speedMultiplier = parseFloat(document.getElementById('cycles-speed').value);
+
+                // Accumulate progress: speedMultiplier is "steps per second"
+                cyclesTotalProgressOffset += (delta / 1000) * speedMultiplier;
+
+                const currentStepCumulative = Math.floor(cyclesTotalProgressOffset);
+                const currentStepInLoop = currentStepCumulative % totalSteps;
+                const progressInStep = cyclesTotalProgressOffset - currentStepCumulative;
+
+                const isAllCyclesCompleteStep = currentStepInLoop === 0;
+                const currentPauseDuration = isAllCyclesCompleteStep ? 0.40 : pauseDuration;
+                const currentMoveDuration = 1 - currentPauseDuration;
+
+                let adjustedProgress;
+                let isInPause = false;
+                let pauseProgress = 0;
+
+                if (progressInStep < currentPauseDuration) {
+                    // During pause - stay at the completed position
+                    adjustedProgress = currentStepInLoop / totalSteps;
+                    isInPause = true;
+                    pauseProgress = progressInStep / currentPauseDuration;
+                } else {
+                    // During movement
+                    const moveProgress = (progressInStep - currentPauseDuration) / currentMoveDuration;
+                    adjustedProgress = (currentStepInLoop + moveProgress) / totalSteps;
+                }
+
+                // Update DOM counter immediately
+                document.getElementById('cycles-step-counter').textContent = currentStepCumulative;
+
+                drawCyclesVisualisation(cyclesPerm, adjustedProgress, isInPause, totalSteps, pauseProgress, currentStepCumulative);
+
+                cyclesAnimationId = requestAnimationFrame(animate);
+            }
+
+            if (isCyclesPaused) {
+                // Resuming from pause
+                isCyclesPaused = false;
+                btn.textContent = 'Pause';
+                cyclesLastTime = Date.now();
+                animate();
+                return;
+            }
+
+            // Starting fresh
+            btn.textContent = 'Pause';
+            cyclesStepCount = 0;
+            cyclesTotalProgressOffset = 0;
+            isCyclesPaused = false;
+            cyclesLastTime = Date.now();
+            document.getElementById('cycles-step-counter').textContent = '0';
+
+            animate();
+        }
+
+        function drawCyclesVisualisation(perm, animProgress, isInPause, totalStepsParam, pauseProgress, stepCountCumulative) {
+            isInPause = isInPause || false; // Default to false for non-animated calls
+            pauseProgress = pauseProgress || 0;
+            stepCountCumulative = stepCountCumulative || 0;
+            const canvas = document.getElementById('cycles-canvas');
+            const ctx = canvas.getContext('2d');
+            const width = canvas.width;
+            const height = canvas.height;
+            const centerX = width / 2;
+            const centerY = height / 2;
+            const radius = Math.min(width, height) * 0.35;
+            const nodeRadius = Math.min(25, radius / cyclesN * 1.5);
+
+            // Clear canvas
+            ctx.clearRect(0, 0, width, height);
+
+            // Get cycles for coloring
+            const oldN = n;
+            n = cyclesN;
+            const cycles = getDisjointCyclesArray(perm, cyclesN);
+            n = oldN;
+
+            // Find LCM of all cycle lengths to sync animation
+            const cycleLengths = cycles.map(c => c.length);
+            const gcd = (a, b) => b === 0 ? a : gcd(b, a % b);
+            const lcm = (a, b) => (a * b) / gcd(a, b);
+            const totalSteps = totalStepsParam || cycleLengths.reduce(lcm, 1);
+
+            // Assign colors to cycles and find which cycle each element belongs to
+            const elementToColor = {};
+            const elementToCycle = {};
+            cycles.forEach((cycle, idx) => {
+                const color = colors[idx % colors.length];
+                cycle.forEach(el => {
+                    elementToColor[el] = color;
+                    elementToCycle[el] = cycle;
+                });
+            });
+
+            // Calculate node positions
+            const positions = {};
+            for (let i = 1; i <= cyclesN; i++) {
+                const angle = -Math.PI / 2 + (2 * Math.PI * (i - 1)) / cyclesN;
+                positions[i] = {
+                    x: centerX + radius * Math.cos(angle),
+                    y: centerY + radius * Math.sin(angle)
+                };
+            }
+
+            // Draw all arrows (static paths)
+            ctx.lineWidth = 2.5;
+            for (let i = 1; i <= cyclesN; i++) {
+                const target = perm[i - 1];
+                const start = positions[i];
+                const color = elementToColor[i] || '#888';
+
+                if (target === i) {
+                    // Draw self-loop for fixed points.
+                    // The loop is offset so that the circle passes through the node center
+                    // (circle center is to the right of the node by loopRadius). This
+                    // produces a loop which goes through the node's center during animation.
+                    const loopRadius = nodeRadius * 0.9;
+                    const loopCenterX = start.x + loopRadius; // offset to the right
+                    const loopCenterY = start.y;
+
+                    ctx.beginPath();
+                    ctx.strokeStyle = color;
+                    ctx.globalAlpha = 0.6;
+                    ctx.lineWidth = 2;
+                    ctx.arc(loopCenterX, loopCenterY, loopRadius, 0, 2 * Math.PI);
+                    ctx.stroke();
+                    ctx.globalAlpha = 1.0;
+
+                    // Draw single arrowhead at the right-most point of loop (direction)
+                    const arrowAngle = 0; // pointing to the right-most point
+                    const arrowX = loopCenterX + loopRadius * Math.cos(arrowAngle);
+                    const arrowY = loopCenterY + loopRadius * Math.sin(arrowAngle);
+                    const arrowSize = 8;
+
+                    ctx.beginPath();
+                    ctx.strokeStyle = color;
+                    ctx.lineWidth = 2;
+                    ctx.moveTo(arrowX, arrowY);
+                    ctx.lineTo(
+                        arrowX - arrowSize * Math.cos(arrowAngle - Math.PI / 6),
+                        arrowY - arrowSize * Math.sin(arrowAngle - Math.PI / 6)
+                    );
+                    ctx.moveTo(arrowX, arrowY);
+                    ctx.lineTo(
+                        arrowX - arrowSize * Math.cos(arrowAngle + Math.PI / 6),
+                        arrowY - arrowSize * Math.sin(arrowAngle + Math.PI / 6)
+                    );
+                    ctx.stroke();
+                } else {
+                    const end = positions[target];
+
+                    // Draw the path
+                    ctx.beginPath();
+                    ctx.strokeStyle = color;
+                    ctx.globalAlpha = 0.4;
+                    ctx.moveTo(start.x, start.y);
+                    ctx.lineTo(end.x, end.y);
+                    ctx.stroke();
+                    ctx.globalAlpha = 1.0;
+
+                    // Draw arrowhead
+                    const angle = Math.atan2(end.y - start.y, end.x - start.x);
+                    const arrowSize = 12;
+                    const arrowDistance = nodeRadius + 5;
+
+                    const arrowX = end.x - Math.cos(angle) * arrowDistance;
+                    const arrowY = end.y - Math.sin(angle) * arrowDistance;
+
+                    ctx.beginPath();
+                    ctx.strokeStyle = color;
+                    ctx.lineWidth = 2;
+                    ctx.moveTo(arrowX, arrowY);
+                    ctx.lineTo(
+                        arrowX - arrowSize * Math.cos(angle - Math.PI / 6),
+                        arrowY - arrowSize * Math.sin(angle - Math.PI / 6)
+                    );
+                    ctx.moveTo(arrowX, arrowY);
+                    ctx.lineTo(
+                        arrowX - arrowSize * Math.cos(angle + Math.PI / 6),
+                        arrowY - arrowSize * Math.sin(angle + Math.PI / 6)
+                    );
+                    ctx.stroke();
+                }
+            }
+
+            // Draw animated particles for each element
+            // All particles take the same time to move one step
+            // Shorter cycles just complete more frequently
+
+            for (let startElement = 1; startElement <= cyclesN; startElement++) {
+                const cycle = elementToCycle[startElement];
+                const cycleLength = cycle.length;
+                const color = elementToColor[startElement] || '#888';
+
+                // All particles move at the same rate: animProgress directly determines step progress
+                // This means a 2-cycle and a 3-cycle both move at the same speed, but the 2-cycle
+                // completes and restarts more often
+                const currentStepIndex = Math.floor(animProgress * totalSteps);
+                const stepProgress = (animProgress * totalSteps) - currentStepIndex;
+
+                // Map global step to position in this specific cycle
+                const startIndexInCycle = cycle.indexOf(startElement);
+                const cycleStepIndex = currentStepIndex % cycleLength;
+
+                const currentPosIndex = (startIndexInCycle + cycleStepIndex) % cycleLength;
+                const nextPosIndex = (startIndexInCycle + cycleStepIndex + 1) % cycleLength;
+
+                const currentPos = cycle[currentPosIndex];
+                const nextPos = cycle[nextPosIndex];
+
+                const start = positions[currentPos];
+                const end = positions[nextPos];
+
+                // Interpolate position
+                let particleX, particleY;
+
+                if (currentPos === nextPos) {
+                    // Fixed point - animate on self-loop that passes through node center.
+                    // Use the same geometry as the static loop drawn above: circle centered
+                    // to the right of the node so the left-most point lies at the node center.
+                    const loopRadius = nodeRadius * 0.9;
+                    const loopCenterX = start.x + loopRadius;
+                    const loopCenterY = start.y;
+                    // Start the particle at the node center (left-most point of the loop)
+                    // so angle = π corresponds to x = loopCenterX + loopRadius * cos(π) = start.x
+                    const particleAngle = Math.PI + stepProgress * 2 * Math.PI;
+                    particleX = loopCenterX + loopRadius * Math.cos(particleAngle);
+                    particleY = loopCenterY + loopRadius * Math.sin(particleAngle);
+                } else {
+                    particleX = start.x + (end.x - start.x) * stepProgress;
+                    particleY = start.y + (end.y - start.y) * stepProgress;
+                }
+
+                // Draw animated particle with starting number (no flash on particle)
+                ctx.beginPath();
+                ctx.fillStyle = color;
+                ctx.arc(particleX, particleY, 16, 0, 2 * Math.PI);
+                ctx.fill();
+
+                // Draw starting number on particle (fixed)
+                ctx.fillStyle = '#fff';
+                ctx.font = 'bold 20px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(startElement, particleX, particleY);
+            }
+
+            // Draw nodes with flash effect
+            const currentStepIndex = Math.floor(animProgress * totalSteps);
+            const stepProgress = (animProgress * totalSteps) - currentStepIndex;
+
+            // Check if all cycles are flashing together (at step multiples of LCM)
+            const allCyclesFlash = isInPause && (stepCountCumulative % totalSteps === 0) && (stepCountCumulative > 0);
+
+            for (let i = 1; i <= cyclesN; i++) {
+                const pos = positions[i];
+                const color = elementToColor[i] || '#888';
+
+                // Check if this node should flash (when its particle returns to starting position)
+                const cycle = elementToCycle[i];
+                const cycleLength = cycle.length;
+
+                // Node flashes when current step is a multiple of cycle length
+                // Use stepCountCumulative to determine if we are at a completion point
+                const stepsInCycle = stepCountCumulative % cycleLength;
+                const shouldFlash = isInPause && stepsInCycle === 0;
+
+                // Calculate flash effect for this node
+                let currentNodeRadius = nodeRadius;
+                if (shouldFlash) {
+                    // Pulsing flash effect - animate throughout the pause
+                    // Use pauseProgress (0-1) for intensity during the pause
+                    const flashIntensity = Math.sin(pauseProgress * Math.PI * 10);
+                    const baseIncrease = allCyclesFlash ? 25 : 8; // Even bigger flash
+                    currentNodeRadius = nodeRadius + baseIncrease * Math.abs(flashIntensity);
+                    ctx.shadowBlur = allCyclesFlash ? 80 : 25; // More glow
+                    ctx.shadowColor = color;
+
+                    // Add an extra glowing ring when all cycles complete
+                    if (allCyclesFlash) {
+                        ctx.beginPath();
+                        ctx.strokeStyle = color;
+                        ctx.lineWidth = 3;
+                        ctx.globalAlpha = 0.5 * Math.abs(flashIntensity);
+                        ctx.arc(pos.x, pos.y, currentNodeRadius + 10, 0, 2 * Math.PI);
+                        ctx.stroke();
+                        ctx.globalAlpha = 1.0;
+                    }
+                }
+
+                // Draw node circle
+                ctx.beginPath();
+                ctx.fillStyle = color;
+                ctx.arc(pos.x, pos.y, currentNodeRadius, 0, 2 * Math.PI);
+                ctx.fill();
+                ctx.shadowBlur = 0;
+
+                // Draw border
+                ctx.beginPath();
+                ctx.strokeStyle = '#fff';
+                ctx.lineWidth = 2;
+                ctx.arc(pos.x, pos.y, nodeRadius, 0, 2 * Math.PI);
+                ctx.stroke();
+
+                // Draw number
+                ctx.fillStyle = '#fff';
+                ctx.font = `bold ${Math.floor(nodeRadius * 1.2)}px Arial`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(i, pos.x, pos.y);
+            }
+
+            // Draw "ORDER REACHED" flash overlay
+            if (allCyclesFlash) {
+                const flashIntensity = Math.sin(pauseProgress * Math.PI * 10);
+
+                // Dim everything slightly with a dark overlay first? No, let's go for a LIGHT glow
+                ctx.save();
+                ctx.globalAlpha = 0.2 * Math.abs(flashIntensity);
+                const gradient = ctx.createRadialGradient(centerX, centerY, radius * 0.5, centerX, centerY, radius * 1.5);
+                gradient.addColorStop(0, '#00d9ff');
+                gradient.addColorStop(1, 'transparent');
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, 0, width, height);
+                ctx.restore();
+
+                // Draw text
+                ctx.save();
+                ctx.fillStyle = '#00d9ff';
+                ctx.font = 'bold 48px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.shadowBlur = 20;
+                ctx.shadowColor = '#00d9ff';
+                ctx.globalAlpha = Math.abs(flashIntensity);
+                ctx.fillText(`ORDER ${totalSteps}`, centerX, centerY - 20);
+                ctx.font = 'bold 36px Arial';
+                ctx.fillText(`Completed ${stepCountCumulative}`, centerX, centerY + 30);
+                ctx.restore();
+            }
+
+            // Draw Step counter inside the canvas (reads the visible counter text set by animation loop)
+            try {
+                const stepEl = document.getElementById('cycles-step-counter');
+                const displayText = stepEl ? (stepEl.textContent || '0') : String(cyclesStepCount || 0);
+                const label = `Completed: ${displayText}`;
+
+                // style and position
+                ctx.save();
+                ctx.font = 'bold 18px Arial';
+                const padding = 10;
+                const textWidth = ctx.measureText(label).width;
+                const boxW = textWidth + padding * 2;
+                const boxH = 30;
+                const boxX = width - boxW - 12;
+                const boxY = 12;
+
+                // background
+                ctx.fillStyle = 'rgba(0,0,0,0.55)';
+                ctx.fillRect(boxX, boxY, boxW, boxH);
+
+                // border
+                ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+                ctx.lineWidth = 1;
+                ctx.strokeRect(boxX + 0.5, boxY + 0.5, boxW - 1, boxH - 1);
+
+                // text
+                ctx.fillStyle = '#8fd742';
+                ctx.textAlign = 'right';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(label, boxX + boxW - padding, boxY + boxH / 2);
+                ctx.restore();
+            } catch (e) {
+                // non-fatal if DOM not ready
+            }
+        }
+
+        // Initialize
+        updateTwoRowTop();
+        renderVisualisation();
+        // Prepare adjacent-swap panel
+        try { adjReset(); } catch (e) { /* ignore if elements not ready */ }
+        // Initialize custom tooltip for Step+ button after DOM is ready
+        setTimeout(() => {
+            try { initStepButtonTooltip(); } catch (e) { /* ignore if not ready */ }
+        }, 100);
+        // Initialize cycles visualisation with default permutation
+        setTimeout(() => {
+            try { visualiseCycles(); } catch (e) { /* ignore if not ready */ }
+        }, 100);
+    </script>
+</body>
+
+</html>

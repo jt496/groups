@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<!--
+    Copyright (c) 2026 John Talbot. All rights reserved.
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+            http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+-->
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="description" content="Interactive visualisation of the seven frieze groups — the symmetry groups of infinite border patterns.">
+    <title>Frieze Groups Explorer</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+
+    <!-- KaTeX for group presentations -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+
+    <!-- Non-module Three.js for file:// compatibility -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+</head>
+
+<body>
+    <div id="canvas-container" role="img" aria-label="Interactive visualisation of the selected frieze group pattern (drag to rotate, scroll to zoom)"></div>
+
+    <div id="ui-overlay">
+        <div class="panel-handle" aria-hidden="true"></div>
+        <header>
+            <h1>Frieze Groups</h1>
+            <p class="subtitle">The 7 infinite strip symmetry groups</p>
+            <a href="../index.html" class="back-link">← Plane Symmetries</a>
+        </header>
+
+        <div class="controls-section">
+            <div class="control-group">
+                <label for="group-select">Select Group:</label>
+                <select id="group-select">
+                    <option value="p1">p1 (Translations only)</option>
+                    <option value="p11g">p11g (Glide reflection)</option>
+                    <option value="p1m1">p1m1 (Vertical reflections)</option>
+                    <option value="p2">p2 (Half-turns)</option>
+                    <option value="p2mg">p2mg (Rotations + glides + vertical reflections)</option>
+                    <option value="p11m">p11m (Horizontal reflection)</option>
+                    <option value="p2mm">p2mm (Full symmetry: Rotations + reflections)</option>
+                </select>
+            </div>
+
+            <div class="control-group">
+                <div class="toggle-row">
+                    <label class="switch">
+                        <input type="checkbox" id="show-lattice" checked>
+                        <span class="slider round"></span>
+                    </label>
+                    <span>Show Unit Cell</span>
+                </div>
+
+                <div class="toggle-row">
+                    <label class="switch">
+                        <input type="checkbox" id="show-symmetries">
+                        <span class="slider round"></span>
+                    </label>
+                    <span>Show Symmetries</span>
+                </div>
+                <div class="toggle-row">
+                    <label class="switch">
+                        <input type="checkbox" id="highlight-central" checked>
+                        <span class="slider round"></span>
+                    </label>
+                    <span>Highlight Central</span>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label for="speed-slider">Animation Speed:</label>
+                <input type="range" id="speed-slider" min="1" max="10" value="5" step="1">
+            </div>
+
+            <div class="control-group info-box">
+                <h3 id="group-name">p1</h3>
+                <p id="group-desc">Loading...</p>
+                <p id="group-pres"></p>
+            </div>
+
+            <div class="control-group">
+                <button id="reset-position" class="btn" style="width: 100%; margin-bottom: 10px;">Reset
+                    Position</button>
+                <label>Symmetries:</label>
+                <div id="symmetry-buttons" class="btn-row">
+                    <!-- Buttons will be added here dynamically -->
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+    (function () {
+        var overlay = document.getElementById('ui-overlay');
+        var handle = overlay ? overlay.querySelector('.panel-handle') : null;
+        if (!overlay || !handle) return;
+        function toggle() { overlay.classList.toggle('panel-expanded'); }
+        handle.addEventListener('click', toggle);
+        var hdr = overlay.querySelector('header');
+        if (hdr) { hdr.style.cursor = 'pointer'; hdr.addEventListener('click', toggle); }
+        var controls = overlay.querySelector('.controls-section');
+        if (controls) {
+            controls.addEventListener('click', function (e) {
+                var btn = e.target.closest('.btn');
+                var genrel = e.target.closest('[data-gen], [data-rel]');
+                var target = btn || genrel;
+                if (!target) return;
+                if (target._deferredClick) return;
+                if (!overlay.classList.contains('panel-expanded')) return;
+                e.stopImmediatePropagation();
+                e.preventDefault();
+                overlay.classList.remove('panel-expanded');
+                var fired = false;
+                function fire() {
+                    if (fired) return;
+                    fired = true;
+                    target._deferredClick = true;
+                    target.click();
+                    target._deferredClick = false;
+                }
+                controls.addEventListener('transitionend', function onEnd(ev) {
+                    if (ev.propertyName !== 'max-height') return;
+                    controls.removeEventListener('transitionend', onEnd);
+                    fire();
+                });
+                setTimeout(fire, 400);
+            }, true);
+        }
+        if (window.matchMedia('(max-width: 640px)').matches) {
+            var cc = document.getElementById('canvas-container');
+            if (cc) {
+                var shift = Math.round(overlay.getBoundingClientRect().height / 2);
+                cc.style.transform = 'translateY(-' + shift + 'px)';
+            }
+        }
+    })();
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,272 @@
+/*
+ Copyright (c) 2026 John Talbot. All rights reserved.
+
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+*/
+
+:root {
+    --bg-color: #1e1e1e;
+    --text-color: #e0e0e0;
+    --panel-bg: #2d2d2d;
+    --accent: #4a9eff;
+}
+
+body {
+    margin: 0;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    overflow: hidden;
+    /* App-like feel */
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+#app {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+header {
+    text-align: center;
+    padding: 1rem;
+    background: #111;
+    border-bottom: 1px solid #333;
+    flex-shrink: 0;
+}
+
+header h1 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+header p {
+    margin: 0.5rem 0 0;
+    opacity: 0.7;
+    font-size: 0.9rem;
+}
+
+main {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+    flex-direction: row;
+}
+
+section {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid #333;
+    border-bottom: none;
+    position: relative;
+    height: 100%;
+    overflow: hidden;
+}
+
+section:last-child {
+    border-right: none;
+}
+
+.canvas-container {
+    flex: 1;
+    width: 100%;
+    /* Let flex handle height, don't force auto if it breaks flexfill */
+    min-height: 0;
+    background: #000;
+    position: relative;
+    overflow: hidden;
+}
+
+.controls {
+    flex: none;
+    width: 100%;
+    height: 320px;
+    /* Fixed height for controls is fine if canvas takes rest */
+    background: var(--panel-bg);
+    padding: 1.5rem;
+    border-top: 1px solid #444;
+    border-left: none;
+    overflow-y: auto;
+    box-sizing: border-box;
+    z-index: 10;
+}
+
+h2 {
+    margin-top: 0;
+    font-size: 1.1rem;
+    color: var(--accent);
+}
+
+.description {
+    font-size: 0.8rem;
+    opacity: 0.8;
+    margin-bottom: 0.8rem;
+}
+
+.control-group {
+    margin-bottom: 0.8rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.control-group label {
+    width: 80px;
+    font-weight: 500;
+    font-size: 0.85rem;
+}
+
+input[type="range"] {
+    flex: 1;
+    cursor: pointer;
+}
+
+span[id^="val-"] {
+    width: 35px;
+    text-align: right;
+    font-family: monospace;
+    font-size: 0.9rem;
+}
+
+.warning-box {
+    background: #3a2e2e;
+    border-left: 4px solid #ff5555;
+    padding: 0.8rem;
+    margin-top: 0.8rem;
+    border-radius: 4px;
+    font-size: 0.85rem;
+}
+
+.warning-box button {
+    margin-top: 0.5rem;
+    background: #ff5555;
+    color: white;
+    border: none;
+    padding: 0.4rem 0.8rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.warning-box button:hover {
+    background: #ff7777;
+}
+
+.instruction {
+    font-style: italic;
+    color: #ffd700;
+    font-size: 0.85rem;
+}
+
+.quat-values p {
+    font-family: monospace;
+    margin: 0.2rem 0;
+    color: #aaa;
+}
+
+#btn-reset-quat {
+    margin-top: 0.8rem;
+    padding: 0.4rem 0.8rem;
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9rem;
+}
+
+#btn-reset-quat:hover {
+    background: #66acff;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1024px) {
+    main {
+        flex-direction: column;
+        overflow-y: auto;
+    }
+
+    section {
+        flex-direction: row;
+        border-right: none;
+        border-bottom: 1px solid #333;
+        height: auto;
+        min-height: 400px;
+        overflow: visible;
+    }
+
+    .canvas-container {
+        height: 100%;
+        min-height: 400px;
+        flex: 2;
+    }
+
+    .controls {
+        height: 100%;
+        width: auto;
+        min-width: 300px;
+        flex: 1;
+        border-top: none;
+        border-left: 1px solid #444;
+    }
+}
+
+@media (max-width: 800px) {
+    section {
+        flex-direction: column;
+    }
+
+    .canvas-container {
+        height: 300px;
+        flex: none;
+    }
+
+    .controls {
+        border-left: none;
+        border-top: 1px solid #444;
+        width: 100%;
+        height: auto;
+    }
+}
+
+/* Back/breadcrumb link */
+.back-link {
+    display: inline-block;
+    color: #60a5fa;
+    text-decoration: none;
+    font-size: 0.85rem;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+    margin-bottom: 8px;
+}
+.back-link:hover { opacity: 1; }
+
+
+/* === Accessibility === */
+:focus-visible {
+    outline: 3px solid var(--accent-color, #38bdf8);
+    outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}

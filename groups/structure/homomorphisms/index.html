@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="description" content="Interactive homomorphism explorer: define a map between groups and verify whether it is a valid group homomorphism or isomorphism.">
+    <title>Homomorphism Explorer</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <!-- MathJax for rendering math equations -->
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+
+<body>
+    <div id="app-container">
+        <header>
+            <a href="../tools.html" class="back-link">← Tools</a>
+            <h1>Homomorphism Explorer</h1>
+            <p class="subtitle">Define a homomorphism from a group \(G\) to a group \(H\)</p>
+        </header>
+
+        <main>
+            <!-- Domain Group G Selection -->
+            <div class="input-section">
+                <h2>1. Domain Group \(G\)</h2>
+                <div class="control-group">
+                    <label for="g-example-select">Presets for \(G\)</label>
+                    <select id="g-example-select">
+                        <option value="">-- Custom Presentation --</option>
+                        <option value="C3">Cyclic Group C₃</option>
+                        <option value="C4">Cyclic Group C₄</option>
+                        <option value="C6">Cyclic Group C₆</option>
+                        <option value="C2xC2">Klein Four-Group (C₂ × C₂)</option>
+                        <option value="S3">Symmetric Group S₃ (or D₃)</option>
+                        <option value="D4">Dihedral Group D₄</option>
+                        <option value="Q8">Quaternion Group Q₈</option>
+                        <option value="D6">Dihedral Group D₆ (Order 12)</option>
+                        <option value="A4">Alternating Group A₄ (Order 12)</option>
+                        <option value="S4">Symmetric Group S₄ (Order 24)</option>
+                        <option value="F20">Frobenius Group F₂₀ (Order 20)</option>
+                        <option value="A5">Alternating Group A₅ (Order 60)</option>
+                        <option value="S5">Symmetric Group S₅ (Order 120)</option>
+                    </select>
+                </div>
+
+                <div class="control-group">
+                    <label for="generators-input">Generators of \(G\)</label>
+                    <input type="text" id="generators-input" placeholder="e.g. a, b" value="a, b">
+                    <p class="help-text">Comma separated list of characters.</p>
+                </div>
+
+                <div class="control-group">
+                    <label for="relations-input">Relations in \(G\)</label>
+                    <input type="text" id="relations-input" placeholder="e.g. a^4, b^2, abab" value="a^4, b^2, abab">
+                    <p class="help-text">Comma separated relations (e.g. "a^4", "b^2", "abab").</p>
+                </div>
+                <!-- Need to determine G order for Isomorphism check using Todd Coxeter -->
+                <button id="analyze-g-btn" class="btn primary" style="display:none;">Calculate |G|</button>
+            </div>
+
+            <!-- Target Group H Selection -->
+            <div class="input-section" style="border-color: #f472b6;">
+                <h2 style="color: #f472b6;">2. Target Group \(H\)</h2>
+                <div class="control-group">
+                    <label for="h-select" style="color: #f472b6;">Select Group \(H\)</label>
+                    <select id="h-select">
+                        <option value="">-- Select Target Group --</option>
+                        <!-- Populated by JS -->
+                    </select>
+                </div>
+                <div id="h-info" class="help-text">Please select a target group.</div>
+            </div>
+
+            <!-- Mapping Selection -->
+            <div class="input-section" style="border-color: #34d399;" id="mapping-section">
+                <h2 style="color: #34d399;">3. Define Mapping \(\phi: G \to H\)</h2>
+                <p class="help-text">Map each generator of \(G\) to an element in \(H\).</p>
+                <div id="mapping-controls" class="control-group" style="gap: 1rem;">
+                    <!-- Mapping selects populated dynamically based on G's generators -->
+                    Waiting for Domain and Target Groups to be defined...
+                </div>
+
+                <button id="check-hom-btn" class="btn primary" style="background: #34d399; color: #0f172a;"
+                    disabled>Evaluate Mapping</button>
+            </div>
+
+            <!-- Results -->
+            <div id="results-section" class="hidden">
+                <div class="status-bar" id="hom-status-bar">
+                    <span id="status-text">Ready</span>
+                </div>
+
+                <div class="result-card full-width">
+                    <h3 style="display: flex; align-items: center; justify-content: space-between;">
+                        Extension Condition
+                        <button id="theory-btn" class="btn"
+                            style="padding: 0.25rem 0.75rem; font-size: 0.9rem; background: transparent; border: 1px solid var(--border-color); color: var(--text-secondary);">
+                            Why?</button>
+                    </h3>
+
+                    <!-- Theory Modal -->
+                    <div id="theory-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="theory-modal-title">
+                        <div class="modal">
+                            <div class="modal-header">
+                                <h3 id="theory-modal-title">Theoretical Background</h3>
+                                <button id="close-theory-btn" class="close-btn" aria-label="Close dialog">&times;</button>
+                            </div>
+                            <div class="modal-body">
+                                <p class="help-text"
+                                    style="color: var(--text-primary); font-size: 1rem; margin-bottom: 1rem; line-height: 1.6;">
+                                    Let \(G\) be a group generated by a set \(S\). Any element \(g \in G\) can be
+                                    written as a
+                                    product of generators \(g = s_1 s_2 \dots s_k\).
+                                    If \(\phi: G \to H\) is a homomorphism, then it must preserve this structure:
+                                    \(\phi(g) =
+                                    \phi(s_1)\phi(s_2)\dots\phi(s_k)\).
+                                    Therefore, a homomorphism is completely determined by where it sends the generators
+                                    of \(G\).
+                                </p>
+                                <p class="help-text"
+                                    style="margin-bottom: 1rem; padding: 1rem; background-color: rgba(52, 211, 153, 0.1); border-left: 4px solid #34d399; border-radius: 4px; color: var(--text-primary); font-size: 1rem; line-height: 1.6;">
+                                    <strong>Von Dyck's Theorem (Extension Condition):</strong> A mapping of the
+                                    generators of \(G\)
+                                    extends to a well-defined homomorphism \(\phi: G \to H\)
+                                    if and only if the chosen elements in \(H\) satisfy all the relations of
+                                    \(G\).
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="relations-check-list" style="font-family: monospace; line-height: 1.8; font-size: 1.1rem;" aria-live="polite" aria-label="Homomorphism relations check results">
+                    </div>
+                </div>
+
+                <div class="result-card">
+                    <h3 style="display: flex; align-items: center; justify-content: space-between;">
+                        Isomorphism Check
+                        <button id="theory-iso-btn" class="btn"
+                            style="padding: 0.25rem 0.75rem; font-size: 0.9rem; background: transparent; border: 1px solid var(--border-color); color: var(--text-secondary);">
+                            Why?</button>
+                    </h3>
+
+                    <!-- Theory Modal Isomorphism -->
+                    <div id="theory-iso-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="theory-iso-modal-title">
+                        <div class="modal">
+                            <div class="modal-header">
+                                <h3 id="theory-iso-modal-title">Isomorphism Conditions</h3>
+                                <button id="close-theory-iso-btn" class="close-btn" aria-label="Close dialog">&times;</button>
+                            </div>
+                            <div class="modal-body">
+                                <p class="help-text"
+                                    style="color: var(--text-primary); font-size: 1rem; margin-bottom: 1rem; line-height: 1.6;">
+                                    An isomorphism is a bijective homomorphism. To verify that our
+                                    mapping \(\phi\) is an isomorphism, we must check two conditions:
+                                </p>
+                                <ul class="help-text"
+                                    style="color: var(--text-primary); font-size: 1rem; margin-left: 1.5rem; margin-bottom: 1rem; line-height: 1.6;">
+                                    <li style="margin-bottom: 0.5rem;"><strong>Surjectivity:</strong> Our map is
+                                        surjective if the image \(\phi(G)\) is all of \(H\). We verify this by
+                                        computing the subgroup of \(H\) generated by the mapped elements and checking if
+                                        its order equals the order of \(H\).</li>
+                                    <li><strong>Injectivity:</strong> A map from \(G\) to its image \(\phi(G)\) is
+                                        injective if and only if no two elements of \(G\) map to the same element in
+                                        \(H\). For finite groups, this is equivalent to checking that the size of the
+                                        domain equals the size of the image, i.e., \(|G| = |\phi(G)|\).</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="iso-check-content" aria-live="polite" aria-label="Isomorphism check result"></div>
+                </div>
+
+                <div class="result-card">
+                    <h3>Image <span class="math">\(\phi(G)\)</span></h3>
+                    <div id="image-content" aria-live="polite" aria-label="Image of the homomorphism"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../group-utils.js"></script>
+    <script src="../presentations/script.js"></script> <!-- Reuse Todd Coxeter from Presentations -->
+    <script src="script.js"></script>
+</body>
+
+</html>

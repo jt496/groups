@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="description" content="Explore group representations and character tables for finite groups with an interactive visualisation tool.">
+    <title>Representation Explorer</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../homomorphisms/style.css">
+    <!-- MathJax for rendering math equations -->
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+
+<body>
+    <div id="app-container">
+        <header>
+            <a href="../tools.html" class="back-link">← Tools</a>
+            <h1>Representation Explorer</h1>
+            <p class="subtitle">Explore linear representations of finite groups over \(\mathbb{C}\)</p>
+        </header>
+
+        <main>
+            <div class="input-section" style="border-color: #a78bfa;">
+                <h2 style="color: #a78bfa;">Representation</h2>
+                <div class="control-group">
+                    <label for="rep-group-select">Select a group</label>
+                    <div style="display:flex; gap: 0.5rem; align-items: stretch;">
+                        <select id="rep-group-select" style="flex: 1;">
+                            <option value="">-- Choose a group --</option>
+                        </select>
+                        <button id="btn-show-group-char-table" class="btn primary hidden"
+                            style="padding: 0 1rem; white-space: nowrap;">Group Character Table</button>
+                    </div>
+                </div>
+                <div class="control-group" id="rep-select-wrapper" style="display:none;">
+                    <label for="rep-select">Select a representation</label>
+                    <select id="rep-select">
+                        <option value="">-- Choose a representation --</option>
+                    </select>
+                </div>
+                <p id="rep-description" class="help-text" style="display:none; line-height:1.6; margin-top:0.25rem;">
+                </p>
+            </div>
+
+            <div id="rep-detail-section" class="input-section hidden" style="border-color: #818cf8;">
+                <h2 id="rep-header" style="color: #818cf8;">ρ : G → GL(<span id="rep-dim"></span>, ℂ)</h2>
+                <div id="rep-gen-matrices"
+                    style="display:flex; gap:1.5rem; flex-wrap:wrap; align-items:flex-start; margin-top:0.75rem;"></div>
+                <div class="control-group" style="margin-top:1.5rem;">
+                    <label>Presentation of G</label>
+                    <p id="rep-presentation" class="help-text" style="font-family:monospace; margin-top:0.25rem;"></p>
+                </div>
+            </div>
+
+            <div id="rep-results" class="hidden">
+                <div class="result-card full-width">
+                    <h3>Relations Check</h3>
+                    <div id="rep-relations-check" style="font-size:1rem; line-height:1.8;"></div>
+                </div>
+
+                <div class="result-card">
+                    <h3>Characters <span class="math">\(\chi(g) = \operatorname{Tr}\rho(g)\)</span></h3>
+                    <div id="rep-char-table"></div>
+                </div>
+
+                <div class="result-card">
+                    <h3>Analysis</h3>
+                    <div id="rep-analysis" style="line-height:1.8;"></div>
+                    <button id="btn-decompose" class="btn primary hidden" style="margin-top:1.25rem;">Decompose</button>
+                </div>
+
+                <div id="rep-cob-card" class="result-card full-width hidden">
+                    <h3>Decomposition</h3>
+                    <div id="rep-cob-content"></div>
+                </div>
+            </div>
+
+            <!-- Modal for Group Character Table -->
+            <div id="char-table-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="modal-group-name">
+                <div class="modal" style="max-width: 900px; width: 95%;">
+                    <div class="modal-header">
+                        <h3 id="modal-group-name">Group Character Table</h3>
+                        <button class="close-btn" id="close-modal-btn" aria-label="Close dialog">&times;</button>
+                    </div>
+                    <div class="modal-body" style="overflow-x: auto;">
+                        <div id="modal-char-table-container"></div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../group-utils.js"></script>
+    <script src="../presentations/script.js"></script>
+    <script src="script.js"></script>
+</body>
+
+</html>

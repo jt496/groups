@@ -1,0 +1,538 @@
+<!doctype html>
+<!--
+  Copyright (c) 2026 John Talbot. All rights reserved.
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1, viewport-fit=cover">
+    <meta name="description" content="Explore the group of units modulo n — the multiplicative group (Z/nZ)* — with an interactive Cayley table and subgroup finder.">
+  <title>Units modulo n — Interactive</title>
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+  <style>
+    :root {
+      --bg: #0f1724;
+      --panel: #0b1220;
+      --accent: #00d9ff;
+      --muted: #9aa7b2;
+      --card: #07101a
+    }
+
+    body {
+      font-family: Inter, Segoe UI, Helvetica, Arial;
+      background: linear-gradient(180deg, var(--bg), #061022);
+      color: #e6eef6;
+      margin: 0;
+      padding: 32px;
+      font-size: 1.3rem
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto
+    }
+
+    h1 {
+      color: var(--accent);
+      margin-bottom: 15px;
+      font-size: 2.8rem
+    }
+
+    .controls {
+      display: flex;
+      gap: 20px;
+      align-items: center;
+      margin-bottom: 24px
+    }
+
+    label {
+      color: var(--muted);
+      font-weight: 600;
+      font-size: 1.3rem
+    }
+
+    input[type=number],
+    select,
+    button {
+      padding: 12px 18px;
+      border-radius: 10px;
+      border: none;
+      font-size: 22px
+    }
+
+    input[type=number],
+    select {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #f8fafc;
+    }
+
+    input[type=number]:focus,
+    select:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    input[type=number] {
+      width: 140px;
+    }
+
+    button.primary {
+      background: linear-gradient(90deg, #00d9ff, #0099cc);
+      color: #042;
+      cursor: pointer;
+      font-weight: 700
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 520px;
+      gap: 32px
+    }
+
+    .panel {
+      background: rgba(255, 255, 255, 0.03);
+      padding: 24px;
+      border-radius: 16px
+    }
+
+    .muted {
+      color: var(--muted);
+      font-size: 18px
+    }
+
+    pre {
+      background: #07101a;
+      padding: 16px;
+      border-radius: 10px;
+      overflow: auto
+    }
+
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      font-family: monospace;
+      font-size: 20px
+    }
+
+    td,
+    th {
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 12px 16px;
+      text-align: center
+    }
+
+    th {
+      background: rgba(0, 217, 255, 0.05);
+      color: var(--accent)
+    }
+
+    .clickable {
+      cursor: pointer
+    }
+
+    .highlight {
+      background: linear-gradient(90deg, #16384a, #0b2633);
+    }
+
+    .small {
+      font-size: 18px
+    }
+
+    .back-link {
+      display: inline-block;
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 0.85rem;
+      opacity: 0.7;
+      transition: opacity 0.2s;
+      margin-bottom: 12px;
+    }
+    .back-link:hover { opacity: 1; }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <a href="../index.html" class="back-link">← Permutations &amp; Integers mod n</a>
+    <h1>Group of units modulo n (ℤ<sub>n</sub><sup>×</sup>)</h1>
+    <p class="muted">Explore the multiplicative group of integers modulo n that are coprime to n — denoted
+      ℤ<sub>n</sub><sup>×</sup>.</p>
+
+    <div class="controls">
+      <label for="n">n =</label>
+      <input id="n" type="number" min="2" value="10">
+      <button id="build" class="primary">Build ℤ<sub>n</sub><sup>×</sup></button>
+      <div style="margin-left:12px;color:var(--muted)">φ(n): <span id="phi">—</span></div>
+      <div style="margin-left:auto; color:var(--muted); font-size:14px">Click a table entry to show subgroup generated
+      </div>
+    </div>
+
+    <div class="grid">
+      <div>
+        <div class="panel">
+          <h3 style="margin-top:0">Units (ℤ<sub><span id="units-n-val">n</span></sub><sup>×</sup>)</h3>
+          <div id="units-list" class="small muted" aria-live="polite" aria-label="Group elements">—</div>
+          <hr style="opacity:0.05" />
+          <div style="display:flex;gap:12px;align-items:flex-start;margin-bottom:8px">
+            <div style="flex:1;">
+              <label for="show-inverses" class="small muted">Show inverses</label>
+              <input id="show-inverses" type="checkbox">
+              <div id="inverses-box"
+                style="margin-top:8px;display:none;background:rgba(255,255,255,0.02);padding:8px;border-radius:8px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+                  <strong style="color:var(--accent)">Inverses</strong>
+                  <button id="copy-inverses" class="small"
+                    style="font-size:12px;padding:4px 8px;border-radius:6px;">Copy</button>
+                </div>
+                <pre id="inverses-pre"
+                  style="margin:0;font-size:18px;background:transparent;border:none;padding:0;color:#cfeff6;">—</pre>
+              </div>
+            </div>
+            <div style="flex:1;">
+              <label for="show-orders" class="small muted">Show orders</label>
+              <input id="show-orders" type="checkbox">
+              <div id="orders-box"
+                style="margin-top:8px;display:none;background:rgba(255,255,255,0.02);padding:8px;border-radius:8px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+                  <strong style="color:var(--accent)">Orders</strong>
+                  <button id="copy-orders" class="small"
+                    style="font-size:12px;padding:4px 8px;border-radius:6px;">Copy</button>
+                </div>
+                <pre id="orders-pre"
+                  style="margin:0;font-size:18px;background:transparent;border:none;padding:0;color:#cfeff6;">—</pre>
+              </div>
+            </div>
+          </div>
+
+          <div id="info" class="small"></div>
+        </div>
+
+        <div class="panel" style="margin-top:12px">
+          <!-- <h3 style="margin-top:0">Generators & Subgroups</h3> -->
+          <div id="isomorphism" aria-live="polite" style="margin-bottom:12px; font-size: 24px; color: var(--accent); font-weight: bold;">
+          </div>
+          <!-- Presentation shown here (replaces the previous single-line generators output) -->
+          <div id="presentation" class="small"
+            style="margin-top:0;background:rgba(255,255,255,0.02);padding:8px;border-radius:8px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+              <strong style="color:var(--accent)">Presentation:</strong>
+              <button id="copy-presentation" class="small"
+                style="font-size:12px;padding:4px 8px;border-radius:6px;">Copy</button>
+            </div>
+            <div id="presentation-math" style="margin:0;font-size:22px;line-height:1.4;color:#cfeff6;"></div>
+            <div id="presentation-mapping" style="margin-top:10px;font-size:18px;color:#cfeff6;"></div>
+            <div id="generators-list" class="muted small" style="margin-top:8px">—</div>
+          </div>
+          <hr style="opacity:0.05" />
+          <div id="subgroup" class="small muted" aria-live="polite">Click a table cell to see &lt;g&gt;.</div>
+        </div>
+      </div>
+
+      <div>
+        <div class="panel">
+          <h3 style="margin-top:0">Multiplication table (mod n)</h3>
+          <div id="table-wrap" aria-live="polite" aria-label="Multiplication table modulo n" style="max-height:520px;overflow:auto">
+            <table id="mult-table"></table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Utility
+    function gcd(a, b) { a = Math.abs(a); b = Math.abs(b); while (b) { [a, b] = [b, a % b] } return a }
+    function eulerPhi(m) { let cnt = 0; for (let i = 1; i <= m; i++)if (gcd(i, m) === 1) cnt++; return cnt }
+    function mod(a, m) { return ((a % m) + m) % m }
+    function power(a, b, m) { let res = 1n; a = BigInt(a); b = BigInt(b); m = BigInt(m); while (b > 0n) { if (b % 2n === 1n) res = (res * a) % m; a = (a * a) % m; b = b / 2n } return Number(res) }
+
+    function getFactorization(n) {
+      const factors = {};
+      let d = 2;
+      let temp = n;
+      while (d * d <= temp) {
+        while (temp % d === 0) {
+          factors[d] = (factors[d] || 0) + 1;
+          temp /= d;
+        }
+        d++;
+      }
+      if (temp > 1) factors[temp] = (factors[temp] || 0) + 1;
+      return factors;
+    }
+
+    function isPrimitiveRoot(g, phi, n) {
+      if (gcd(g, n) !== 1) return false;
+      const factors = Object.keys(getFactorization(phi)).map(Number);
+      for (const p of factors) {
+        if (power(g, phi / p, n) === 1) return false;
+      }
+      return true;
+    }
+
+    function findPrimitiveRoot(n) {
+      if (n === 2) return 1;
+      if (n === 4) return 3;
+      const phi = eulerPhi(n);
+      for (let g = 2; g < n; g++) {
+        if (isPrimitiveRoot(g, phi, n)) return g;
+      }
+      return null;
+    }
+
+    // Extended Euclidean Algorithm for CRT
+    function modInverse(a, m) {
+      let m0 = m, t, q;
+      let x0 = 0, x1 = 1;
+      if (m === 1) return 0;
+      while (a > 1) {
+        q = Math.floor(a / m);
+        t = m;
+        m = a % m, a = t;
+        t = x0;
+        x0 = x1 - q * x0;
+        x1 = t;
+      }
+      if (x1 < 0) x1 += m0;
+      return x1;
+    }
+
+    function crt(pairs) {
+      let result = 0;
+      let M = 1;
+      for (const [_, m] of pairs) M *= m;
+      for (const [a, m] of pairs) {
+        const Mi = M / m;
+        result = (result + a * Mi * modInverse(Mi, m)) % M;
+      }
+      return result;
+    }
+
+    // Compute units U(n)
+    function units(n) { const arr = []; for (let a = 1; a < n; a++)if (gcd(a, n) === 1) arr.push(a); return arr }
+
+    // Build multiplication table over given elements (mod n)
+    function multTable(elems, n) { const table = []; for (let i = 0; i < elems.length; i++) { const row = []; for (let j = 0; j < elems.length; j++) { row.push(mod(elems[i] * elems[j], n)); } table.push(row); } return table }
+
+    function inverseMap(elems, n) { const inv = {}; for (const a of elems) { for (const b of elems) { if (mod(a * b, n) === 1) { inv[a] = b; break } } } return inv }
+
+    function orderOf(a, elemsSet, n) { let x = 1; let val = mod(a, n); while (val !== 1) { val = mod(val * a, n); x++; if (x > 10000) break; } return x }
+
+    // Render functions
+    function renderUnitsList(elems) { const div = document.getElementById('units-list'); div.innerHTML = elems.join(', '); }
+
+    function renderTable(elems, n) {
+      const tbl = document.getElementById('mult-table'); tbl.innerHTML = '';
+      const thead = document.createElement('thead');
+      const trh = document.createElement('tr');
+      trh.appendChild(document.createElement('th'));
+      elems.forEach(v => { const th = document.createElement('th'); th.textContent = v; trh.appendChild(th) });
+      thead.appendChild(trh); tbl.appendChild(thead);
+
+      const tbody = document.createElement('tbody');
+      elems.forEach((a, i) => {
+        const tr = document.createElement('tr'); const th = document.createElement('th'); th.textContent = a; tr.appendChild(th);
+        elems.forEach((b, j) => { const td = document.createElement('td'); td.textContent = mod(a * b, n); td.className = 'clickable'; td.dataset.g = a; td.dataset.h = b; td.addEventListener('click', () => showGeneratedSubgroup(a, n)); tr.appendChild(td) });
+        tbody.appendChild(tr);
+      });
+      tbl.appendChild(tbody);
+    }
+
+    function showGeneratedSubgroup(g, n) { const elems = units(n); let cur = g; const seen = []; const set = new Set(); while (!set.has(cur)) { set.add(cur); seen.push(cur); cur = mod(cur * g, n); } seen.sort((a, b) => a - b); document.getElementById('subgroup').innerHTML = `&lt;${g}&gt; = { ${seen.sort((a, b) => a - b).join(', ')} } (order ${seen.length})` }
+
+    function findGenerators(elems, n) { const gens = []; const setAll = new Set(elems); for (const g of elems) { let cur = 1; const gen = new Set(); cur = mod(g, n); gen.add(g); while (cur !== 1) { cur = mod(cur * g, n); gen.add(cur); if (gen.size > elems.length) break; } if (gen.size === elems.length) gens.push(g); } return gens }
+
+    // Compute a small generating set (greedy) for the abelian group
+    function getStructureAndGenerators(n) {
+      const factors = getFactorization(n);
+      const components = [];
+      const gens = [];
+
+      const pp = Object.entries(factors).map(([p, e]) => [parseInt(p), Math.pow(p, e)]);
+
+      for (const [p, pe] of pp) {
+        if (p === 2) {
+          if (pe === 4) {
+            components.push(2);
+            gens.push({ val: 3, pe: 4 });
+          } else if (pe >= 8) {
+            components.push(2);
+            gens.push({ val: pe - 1, pe: pe }); // -1 mod 2^e
+            components.push(pe / 4);
+            gens.push({ val: 5, pe: pe });
+          }
+        } else {
+          const phi = pe - pe / p;
+          components.push(phi);
+          const r = findPrimitiveRoot(pe);
+          gens.push({ val: r, pe: pe });
+        }
+      }
+
+      // Lift generators to Z_n using CRT
+      const finalGens = gens.map(g => {
+        const crtPairs = pp.map(([p, pe]) => {
+          if (pe === g.pe) return [g.val, pe];
+          return [1, pe];
+        });
+        // Special case for Z_2^e where we have two generators for the same pe
+        // We need to distinguish them. But wait, if we have two, they both have pe.
+        // Let's refine the lifting.
+      });
+
+      // Refined lifting:
+      const liftedGens = [];
+      let genIdx = 0;
+      for (const [p, pe] of pp) {
+        if (p === 2) {
+          if (pe === 4) {
+            const val = gens[genIdx++].val;
+            liftedGens.push(crt(pp.map(([p2, pe2]) => pe2 === pe ? [val, pe] : [1, pe2])));
+          } else if (pe >= 8) {
+            const val1 = gens[genIdx++].val;
+            const val2 = gens[genIdx++].val;
+            liftedGens.push(crt(pp.map(([p2, pe2]) => pe2 === pe ? [val1, pe] : [1, pe2])));
+            liftedGens.push(crt(pp.map(([p2, pe2]) => pe2 === pe ? [val2, pe] : [1, pe2])));
+          }
+        } else {
+          const val = gens[genIdx++].val;
+          liftedGens.push(crt(pp.map(([p2, pe2]) => pe2 === pe ? [val, pe] : [1, pe2])));
+        }
+      }
+
+      return { components, generators: liftedGens };
+    }
+
+    // Wire up
+    document.getElementById('build').addEventListener('click', () => {
+      const n = parseInt(document.getElementById('n').value);
+      if (isNaN(n) || n < 2) { alert('Enter integer n≥2'); return }
+      document.getElementById('units-n-val').textContent = n;
+      const elems = units(n);
+      document.getElementById('phi').textContent = eulerPhi(n);
+      renderUnitsList(elems);
+      renderTable(elems, n);
+
+      const invmap = inverseMap(elems, n);
+
+      // Render inverses
+      const inversesBox = document.getElementById('inverses-box');
+      const inversesPre = document.getElementById('inverses-pre');
+      const showInv = document.getElementById('show-inverses').checked;
+      if (showInv) {
+        inversesBox.style.display = '';
+        inversesPre.textContent = elems.map(a => `${a} ↦ ${invmap[a] || '?'} `).join('\n');
+      } else { inversesBox.style.display = 'none'; }
+
+      // Render orders
+      const ordersBox = document.getElementById('orders-box');
+      const ordersPre = document.getElementById('orders-pre');
+      const showOrd = document.getElementById('show-orders').checked;
+      if (showOrd) {
+        ordersBox.style.display = '';
+        ordersPre.textContent = elems.map(a => `${a} : ${orderOf(a, null, n)}`).join('\n');
+      } else { ordersBox.style.display = 'none'; }
+
+      // document.getElementById('info').innerHTML = '<span class="muted">Toggle "Show inverses" or "Show orders" to see more.</span>';
+
+      const structInfo = getStructureAndGenerators(n);
+      const minGens = structInfo.generators;
+      const components = structInfo.components;
+
+      // Display Isomorphism
+      const isoText = components.length === 0 ? 'Z_1' : components.map(c => `C_{${c}}`).join(' \\times ');
+      const isoDiv = document.getElementById('isomorphism');
+      isoDiv.innerHTML = `\\( \\mathbb{Z}_{${n}}^{\\times} \\cong ${isoText} \\)`;
+
+      const gensEl = document.getElementById('generators-list');
+      if (components.length === 0) {
+        gensEl.textContent = 'Trivial group.';
+      } else if (components.length === 1 && n !== 8 && n !== 16 && !(n % 8 === 0 && n > 1)) {
+        // This is a bit loose, better to just check if it's cyclic
+        const ord = orderOf(minGens[0], null, n);
+        if (ord === elems.length) {
+          gensEl.textContent = 'Generators (cyclic): ' + findGenerators(elems, n).join(', ');
+        } else {
+          gensEl.textContent = 'Not Cyclic.';
+        }
+      } else {
+        gensEl.textContent = 'Not Cyclic.';
+      }
+      document.getElementById('subgroup').textContent = 'Click a row of the table to show subgroup generated.';
+
+      // Build a presentation
+      let presText = '';
+      const letters = 'abcdefghijklmnopqrstuvwxyz'.split('');
+      if (minGens.length === 0) {
+        presText = 'Trivial group.';
+      } else {
+        const names = minGens.map((v, i) => letters[i] || `g_{${i + 1}}`);
+        const orders = minGens.map(v => orderOf(v, null, n));
+        const ordRels = orders.map((o, i) => `${names[i]}^{${o}}=1`);
+        const commRels = [];
+        for (let i = 0; i < names.length; i++) {
+          for (let j = i + 1; j < names.length; j++) {
+            commRels.push(`${names[i]}${names[j]}=${names[j]}${names[i]}`);
+          }
+        }
+        const allRels = ordRels.concat(commRels).join(', ');
+        presText = `\\(\\langle ${names.join(', ')} \\mid ${allRels} \\rangle\\)\\n\\n`;
+        presText += 'Mapping: ' + names.map((nm, i) => `\\(${nm} \\mapsto [${minGens[i]}]\\)`).join(', ');
+      }
+      // Split presentation into LaTeX math and mapping for proper MathJax rendering
+      const parts = presText.split('\\n\\n');
+      const mathPart = parts[0] || '';
+      const mappingPart = parts.slice(1).join('\\n\\n') || '';
+      const presMathEl = document.getElementById('presentation-math');
+      const presMapEl = document.getElementById('presentation-mapping');
+      presMathEl.innerHTML = mathPart;
+      // show mapping as LaTeX inline
+      presMapEl.innerHTML = mappingPart.replace(/\\n/g, '<br>');
+      // store LaTeX source on the container for copying
+      document.getElementById('presentation').dataset.tex = presText;
+      if (window.MathJax && window.MathJax.typesetPromise) { MathJax.typesetPromise([presMathEl, presMapEl, isoDiv]).catch(() => { }); }
+    });
+
+    // Quick build on load
+    document.getElementById('build').click();
+    // Wire copy buttons
+    document.getElementById('copy-inverses').addEventListener('click', () => {
+      const t = document.getElementById('inverses-pre').textContent;
+      navigator.clipboard && navigator.clipboard.writeText(t);
+    });
+    document.getElementById('copy-orders').addEventListener('click', () => {
+      const t = document.getElementById('orders-pre').textContent;
+      navigator.clipboard && navigator.clipboard.writeText(t);
+    });
+    document.getElementById('copy-presentation').addEventListener('click', () => {
+      const presContainer = document.getElementById('presentation');
+      const t = presContainer.dataset.tex || '';
+      navigator.clipboard && navigator.clipboard.writeText(t);
+    });
+    // Toggle handlers to re-run build display without recomputing everything
+    document.getElementById('show-inverses').addEventListener('change', () => document.getElementById('build').click());
+    document.getElementById('show-orders').addEventListener('change', () => document.getElementById('build').click());
+  </script>
+</body>
+
+</html>

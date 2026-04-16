@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="description" content="Explore Cayley graphs for any finite group: choose generators and see the graph update in real time.">
+    <title>Cayley Graph Explorer</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+
+    <!-- Dependencies -->
+    <script src="https://unpkg.com/3d-force-graph"></script>
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Outfit', sans-serif;
+            background-color: #0f172a;
+            color: #fff;
+            overflow: hidden;
+        }
+
+        #ui-container {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            z-index: 10;
+            background: rgba(30, 41, 59, 0.85);
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            width: 300px;
+        }
+
+        h2 {
+            margin: 0 0 15px 0;
+            font-size: 1.2rem;
+            color: #38bdf8;
+        }
+
+        label {
+            font-size: 0.9rem;
+            color: #94a3b8;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        select {
+            font-size: 1rem;
+            padding: 8px;
+            margin-bottom: 15px;
+            width: 100%;
+            background: #1e293b;
+            color: #fff;
+            border: 1px solid #475569;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        select:focus {
+            outline: none;
+            border-color: #38bdf8;
+        }
+
+        .legend {
+            margin-top: 15px;
+            font-size: 0.85rem;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .color-box {
+            width: 12px;
+            height: 12px;
+            margin-right: 10px;
+            border-radius: 2px;
+        }
+
+        #graph-container {
+            width: 100vw;
+            height: 100vh;
+        }
+
+        .description {
+            font-size: 0.8rem;
+            color: #cbd5e1;
+            margin-bottom: 15px;
+            line-height: 1.4;
+        }
+
+        .back-link {
+            display: inline-block;
+            color: #38bdf8;
+            text-decoration: none;
+            font-size: 0.8rem;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+            margin-bottom: 10px;
+        }
+
+        .back-link:hover {
+            opacity: 1;
+        }
+
+        .info-btn {
+            background: transparent;
+            border: 1px solid #38bdf8;
+            color: #38bdf8;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-left: 8px;
+            vertical-align: middle;
+            transition: all 0.2s;
+            padding: 0;
+            line-height: 1;
+        }
+
+        .info-btn:hover {
+            background: rgba(56, 189, 248, 0.15);
+        }
+
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 1;
+            transition: opacity 0.2s ease;
+        }
+
+        .modal-overlay.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .modal {
+            background: #1e293b;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            width: 90%;
+            max-width: 560px;
+            max-height: 80vh;
+            overflow-y: auto;
+            transition: transform 0.2s ease;
+        }
+
+        .modal-overlay.hidden .modal {
+            transform: translateY(20px);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            color: #38bdf8;
+            font-size: 1.1rem;
+        }
+
+        .close-btn {
+            background: transparent;
+            border: none;
+            color: #94a3b8;
+            font-size: 1.5rem;
+            cursor: pointer;
+            line-height: 1;
+            padding: 0;
+        }
+
+        .close-btn:hover {
+            color: #fff;
+        }
+
+        .modal-body {
+            padding: 1.5rem;
+            font-size: 0.9rem;
+            color: #cbd5e1;
+            line-height: 1.6;
+        }
+
+        .modal-body p {
+            margin: 0 0 1rem 0;
+        }
+
+        .modal-body p:last-child {
+            margin-bottom: 0;
+        }
+
+        .modal-body strong {
+            color: #f1f5f9;
+        }
+
+        /* === Mobile: Collapsible Bottom Sheet === */
+        .panel-handle {
+            display: none;
+            width: 40px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.25);
+            border-radius: 2px;
+            margin: 0 auto 12px;
+            flex-shrink: 0;
+            cursor: pointer;
+        }
+
+        @media (max-width: 640px) {
+            #ui-container {
+                position: fixed;
+                top: auto;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                width: 100%;
+                max-height: 80vh;
+                border-radius: 16px 16px 0 0;
+                border: none;
+                border-top: 1px solid rgba(255, 255, 255, 0.1);
+                padding: 12px 16px 0;
+                overflow: hidden;
+                display: flex;
+                flex-direction: column;
+            }
+
+            .controls-section {
+                max-height: 0;
+                overflow: hidden;
+                transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+
+            #ui-container.panel-expanded {
+                height: 80vh;
+            }
+
+            #ui-container.panel-expanded .controls-section {
+                flex: 1 1 0;
+                min-height: 0;
+                max-height: none;
+                overflow-y: auto;
+                padding-bottom: 20px;
+            }
+
+            .panel-handle {
+                display: block;
+                flex-shrink: 0;
+            }
+
+            header {
+                flex-shrink: 0;
+            }
+
+            h2 {
+                font-size: 1.1rem;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                margin-bottom: 0;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="ui-container">
+        <div class="panel-handle" aria-hidden="true"></div>
+        <header>
+            <a href="../tools.html" class="back-link">← Tools</a>
+            <h2>Cayley Graph Explorer <button id="cayley-info-btn" class="info-btn" title="What is a Cayley graph?">?</button></h2>
+        </header>
+        <div class="controls-section">
+        <label for="group-select">Select Abstract Group:</label>
+        <select id="group-select">
+            <option value="C7">Cyclic Group C₇</option>
+            <option value="C2xC2">Klein Four-Group (V₄)</option>
+            <option value="C2xC4">C₂ × C₄</option>
+            <option value="C2xC2xC2">C₂ × C₂ × C₂</option>
+            <option value="C2xC2xC2xC2">C₂ × C₂ × C₂ × C₂ (Hypercube)</option>
+            <option value="C10xC5">C₁₀ × C₅ (Torus)</option>
+            <option value="D4">Dihedral Group D₄</option>
+            <option value="D5">Dihedral Group D₅</option>
+            <option value="D5alt">Dihedral Group D₅ (alt)</option>
+            <option value="Q8">Quaternion Group Q₈</option>
+            <option value="A4">A₄ (Cuboctahedron)</option>
+            <option value="A4_Truncated">A₄ (Truncated Tetrahedron)</option>
+            <option value="S4_TruncatedCube">S₄ (Truncated Cube)</option>
+            <option value="S4_Type1">S₄ (Rhombicuboctahedron)</option>
+            <option value="S4_Permutohedron">S₄ (Permutohedron / Truncated Octahedron)</option>
+            <option value="S4_Type4">S₄ (Nauru Graph)</option>
+            <option value="A5">Alternating Group A₅ (Truncated Icosahedron)</option>
+            <option value="S5">Symmetric Group S₅</option>
+            <option value="S6">Symmetric Group S₆</option>
+        </select>
+
+        <div id="group-description" class="description">Select a group to visualize its 3D Cayley Graph.</div>
+
+        <label for="subgroup-select" style="margin-top: 15px;">Highlight Subgroup/Cosets:</label>
+        <select id="subgroup-select">
+            <option value="none">None (Default Colors)</option>
+        </select>
+
+        <div id="generators-section"
+            style="display: none; margin-top: 15px; border-top: 1px solid rgba(255, 255, 255, 0.1); padding-top: 15px;">
+            <div style="font-weight: 600; margin-bottom: 10px; color: #38bdf8; font-size: 0.9rem;">Generators</div>
+            <div id="legend"></div>
+        </div>
+
+        <div id="conjugacy-legend-section"
+            style="display: none; margin-top: 15px; border-top: 1px solid rgba(255, 255, 255, 0.1); padding-top: 15px;">
+            <div style="font-weight: 600; margin-bottom: 10px; color: #a855f7; font-size: 0.9rem;">Conjugacy Classes
+            </div>
+            <div id="conjugacy-legend" style="font-size: 0.85rem; color: #cbd5e1;"></div>
+        </div>
+
+        <button id="reset-camera">Reset Camera</button>
+        <button id="toggle-conjugacy" style="margin-top: 10px;">Show Conjugacy Classes</button>
+        <button id="toggle-cayley-table" style="display: none;">Show Cayley Table</button>
+        </div><!-- /.controls-section -->
+    </div>
+
+    <style>
+        #reset-camera {
+            width: 100%;
+            padding: 10px;
+            margin-top: 15px;
+            background: transparent;
+            color: #38bdf8;
+            border: 1px solid #38bdf8;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+
+        #reset-camera:hover {
+            background: rgba(56, 189, 248, 0.1);
+        }
+
+        #toggle-conjugacy {
+            width: 100%;
+            padding: 10px;
+            background: rgba(168, 85, 247, 0.1);
+            color: #a855f7;
+            border: 1px solid #a855f7;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+
+        #toggle-conjugacy:hover {
+            background: rgba(168, 85, 247, 0.2);
+        }
+
+        #toggle-conjugacy.active {
+            background: #a855f7;
+            color: white;
+        }
+
+        #toggle-cayley-table {
+            width: 100%;
+            padding: 10px;
+            margin-top: 10px;
+            background: rgba(52, 211, 153, 0.1);
+            color: #34d399;
+            border: 1px solid #34d399;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+
+        #toggle-cayley-table:hover {
+            background: rgba(52, 211, 153, 0.2);
+        }
+
+        /* Cayley Table Styles */
+        .cayley-table {
+            border-collapse: collapse;
+            margin: 0 auto;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        .cayley-table th,
+        .cayley-table td {
+            padding: 8px 12px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            white-space: nowrap;
+        }
+
+        .cayley-table th {
+            background: rgba(56, 189, 248, 0.1);
+            color: #38bdf8;
+            font-weight: 600;
+        }
+
+        .cayley-table .cayley-corner {
+            background: transparent;
+            color: #94a3b8;
+        }
+
+        .cayley-table td {
+            background: rgba(30, 41, 59, 0.5);
+            color: #e2e8f0;
+        }
+
+        .cayley-identity-cell {
+            background: rgba(34, 197, 94, 0.1) !important;
+        }
+
+        /* 3D Force Graph Tooltip Styling */
+        .scene-tooltip {
+            font-size: 1.25rem !important;
+            padding: 8px !important;
+            border-radius: 8px !important;
+            background: rgba(15, 23, 42, 0.9) !important;
+            border: 1px solid rgba(168, 85, 247, 0.4) !important;
+            color: #f8fafc !important;
+            line-height: 1.5 !important;
+        }
+
+        .scene-tooltip b {
+            color: #a855f7 !important;
+        }
+    </style>
+
+    <div id="graph-container">
+        <canvas id="fallback-canvas" aria-label="3D Cayley graph visualisation (drag to rotate, scroll to zoom)"></canvas>
+    </div>
+
+    <!-- Cayley Table Modal -->
+    <div id="cayley-table-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="cayley-table-modal-title">
+        <div class="modal" style="max-width: 90vw; width: auto;">
+            <div class="modal-header">
+                <h3 id="cayley-table-modal-title">Cayley Table</h3>
+                <button id="close-cayley-table-btn" class="close-btn" aria-label="Close dialog">&times;</button>
+            </div>
+            <div class="modal-body" style="overflow-x: auto; padding: 1rem;">
+                <div id="cayley-table-container"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cayley Graph Info Modal -->
+    <div id="cayley-info-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="cayley-info-modal-title">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 id="cayley-info-modal-title">What is a Cayley Graph?</h3>
+                <button id="close-cayley-info-btn" class="close-btn" aria-label="Close dialog">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>
+                    A <strong>Cayley graph</strong> Cay(G, S) is a graph that encodes the structure of a group G
+                    with respect to a chosen generating set S.
+                </p>
+                <p>
+                    <strong>Vertices</strong> correspond to elements of G. <strong>Edges</strong> are drawn from
+                    each element g to gs for every generator s &isin; S, with each generator given its own colour.
+                    The resulting graph reveals the group's multiplication structure visually.
+                </p>
+                <p>
+                    <strong>Key properties:</strong>
+                </p>
+                <p>
+                    &bull; The graph is <strong>vertex-transitive</strong> &mdash; every vertex looks the same,
+                    reflecting the fact that group elements are all "equivalent" under left multiplication.
+                </p>
+                <p>
+                    &bull; The graph is <strong>connected</strong> if and only if S generates G.
+                </p>
+                <p>
+                    &bull; Each vertex has <strong>out-degree |S|</strong>.
+                </p>
+                <p>
+                    &bull; Different choices of generating set S produce different (but isomorphic-as-groups)
+                    Cayley graphs, which is why the same group can appear as several distinct polyhedra above.
+                </p>
+                <p>
+                    Cayley graphs are a powerful bridge between algebra and geometry: the symmetries of the graph
+                    reflect the algebraic structure of G, and geometric properties of the graph (such as diameter
+                    or girth) carry group-theoretic meaning.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Logic -->
+    <script src="../../cayley-graph.js"></script>
+    <script src="script.js"></script>
+    <script>
+        (function () {
+            const infoBtn = document.getElementById('cayley-info-btn');
+            const infoModal = document.getElementById('cayley-info-modal');
+            const closeBtn = document.getElementById('close-cayley-info-btn');
+
+            infoBtn.addEventListener('click', () => infoModal.classList.remove('hidden'));
+            closeBtn.addEventListener('click', () => infoModal.classList.add('hidden'));
+            infoModal.addEventListener('click', (e) => {
+                if (e.target === infoModal) infoModal.classList.add('hidden');
+            });
+
+            // Cayley Table Modal
+            const cayleyTableBtn = document.getElementById('toggle-cayley-table');
+            const cayleyTableModal = document.getElementById('cayley-table-modal');
+            const closeCayleyTableBtn = document.getElementById('close-cayley-table-btn');
+            const cayleyTableContainer = document.getElementById('cayley-table-container');
+            const cayleyTableTitle = document.getElementById('cayley-table-modal-title');
+
+            function fmtGroupName(name) {
+                const subs = {'0':'₀','1':'₁','2':'₂','3':'₃','4':'₄','5':'₅','6':'₆','7':'₇','8':'₈','9':'₉'};
+                return name.replace(/\s*x\s*/g, ' × ').replace(/\d/g, d => subs[d]);
+            }
+
+            cayleyTableBtn.addEventListener('click', () => {
+                const key = document.getElementById('group-select').value;
+                const groupDef = groups[key];
+                cayleyTableTitle.textContent = `Cayley Table — ${fmtGroupName(groupDef ? groupDef.name : key)}`;
+
+                // Use canonical dihedral order when available
+                const orderedElements = currentCanonicalOrder
+                    ? currentCanonicalOrder.map(i => currentElements[i])
+                    : currentElements;
+                const orderedLabels = currentCanonicalOrder
+                    ? currentCanonicalOrder.map(i => currentSymbolicLabels[i])
+                    : currentSymbolicLabels;
+
+                const { table } = CayleyGraph.generateCayleyTable(orderedElements, {
+                    serialize: (p) => p.join(',')
+                });
+
+                CayleyGraph.renderCayleyTable(cayleyTableContainer, orderedElements, table, {
+                    mode: 'view',
+                    formatLabel: (el, i) => orderedLabels ? orderedLabels[i] : CayleyGraph.permToCycleString(el)
+                });
+
+                cayleyTableModal.classList.remove('hidden');
+            });
+
+            closeCayleyTableBtn.addEventListener('click', () => cayleyTableModal.classList.add('hidden'));
+            cayleyTableModal.addEventListener('click', (e) => {
+                if (e.target === cayleyTableModal) cayleyTableModal.classList.add('hidden');
+            });
+        })();
+    </script>
+    <script>
+    (function () {
+        var overlay = document.getElementById('ui-container');
+        var handle = overlay ? overlay.querySelector('.panel-handle') : null;
+        if (!overlay || !handle) return;
+        function toggle() { overlay.classList.toggle('panel-expanded'); }
+        handle.addEventListener('click', toggle);
+        var hdr = overlay.querySelector('header');
+        if (hdr) { hdr.style.cursor = 'pointer'; hdr.addEventListener('click', toggle); }
+        var controls = overlay.querySelector('.controls-section');
+        if (controls) {
+            controls.addEventListener('change', function (e) {
+                if (!e.target.matches('select')) return;
+                if (!overlay.classList.contains('panel-expanded')) return;
+                overlay.classList.remove('panel-expanded');
+            });
+            controls.addEventListener('click', function (e) {
+                var btn = e.target.closest('button');
+                if (!btn) return;
+                if (btn._deferredClick) return;
+                if (!overlay.classList.contains('panel-expanded')) return;
+                e.stopImmediatePropagation();
+                e.preventDefault();
+                overlay.classList.remove('panel-expanded');
+                var fired = false;
+                function fire() {
+                    if (fired) return;
+                    fired = true;
+                    btn._deferredClick = true;
+                    btn.click();
+                    btn._deferredClick = false;
+                }
+                controls.addEventListener('transitionend', function onEnd(ev) {
+                    if (ev.propertyName !== 'max-height') return;
+                    controls.removeEventListener('transitionend', onEnd);
+                    fire();
+                });
+                setTimeout(fire, 400);
+            }, true);
+        }
+        // On mobile, shift the graph container so it centres above the collapsed panel strip.
+        if (window.matchMedia('(max-width: 640px)').matches) {
+            var gc = document.getElementById('graph-container');
+            if (gc) {
+                var shift = Math.round(overlay.getBoundingClientRect().height / 2);
+                gc.style.transform = 'translateY(-' + shift + 'px)';
+            }
+        }
+    })();
+    </script>
+</body>
+
+</html>

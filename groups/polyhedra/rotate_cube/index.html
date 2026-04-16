@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<!--
+    Copyright (c) 2026 John Talbot. All rights reserved.
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+            http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+-->
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="description" content="Visualise the rotational symmetry group of a cube/octahedron (S4, order 24) with interactive 3D rotations and a Cayley graph.">
+    <title>Cube Symmetry Visualisation</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+
+    <!-- Load 3d-force-graph before Three.js to avoid initialization conflict -->
+    <script src="https://unpkg.com/3d-force-graph"></script>
+    <script>delete window.__THREE__;</script>
+    <!-- Standalone Three.js for OrbitControls and main app logic -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+</head>
+
+<body>
+    <div id="canvas-container">
+
+        <canvas id="cayley-canvas" aria-label="Interactive 3D visualisation of the cube rotational symmetry group (drag to rotate, scroll to zoom)"></canvas>
+    </div>
+
+    <div id="ui-overlay">
+        <div class="panel-handle" aria-hidden="true"></div>
+        <header>
+            <h1>Rotational symmetries of a <button id="poly-primary" class="poly-switch active-poly" onclick="switchPolyhedron(false)">cube</button> / <button id="poly-secondary" class="poly-switch inactive-poly" onclick="switchPolyhedron(true)">octahedron</button></h1>
+            <!-- <p class="subtitle">Visualizing the rotation group O (24 elements)</p> -->
+            <a href="../index.html" class="back-link">← Symmetries of Polyhedra</a>
+        </header>
+
+        <div class="controls-section">
+            <div class="control-group">
+                <button id="subgroup-builder-btn" class="btn subgroup-builder-btn">Subgroup Builder</button>
+            </div>
+            <div id="generator-selector"></div>
+            <div class="control-group">
+                <div class="view-options" data-subgroup-hide>
+
+                    <div class="toggle-row">
+                        <label class="switch">
+                            <input type="checkbox" id="toggle-axes" checked>
+                            <span class="slider round"></span>
+                        </label>
+                        <span>Show Axes</span>
+                    </div>
+                    <div class="toggle-row" style="margin-top: 5px;">
+                        <label class="switch">
+                            <input type="checkbox" id="toggle-diagonals">
+                            <span class="slider round"></span>
+                        </label>
+                        <span>Show Diagonals</span>
+                    </div>
+                    <div class="toggle-row" style="margin-top: 5px;">
+                        <label class="switch">
+                            <input type="checkbox" id="toggle-edge-axes">
+                            <span class="slider round"></span>
+                        </label>
+                        <span>Show Edge Axes</span>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <!-- <h3>Rotations</h3> -->
+
+
+                    <div class="rotation-category">
+                        <span class="label">Face Rotations (Order 4)</span>
+                        <div class="btn-row">
+                            <button class="btn" data-axis="x" data-angle="90" style="border-color: #ff3300;">X</button>
+                            <button class="btn" data-axis="y" data-angle="90" style="border-color: #448aff;">Y</button>
+                            <button class="btn" data-axis="z" data-angle="90" style="border-color: #69f0ae;">Z</button>
+                        </div>
+                    </div>
+
+                    <div class="rotation-category">
+                        <span class="label">Vertex Rotations (Order 3)</span>
+                        <div class="btn-row">
+                            <button class="btn" data-axis="diag1" data-angle="120"
+                                style="border-color: #ff00ff;">D₁</button>
+                            <button class="btn" data-axis="diag2" data-angle="120"
+                                style="border-color: #00ffff;">D₂</button>
+                            <button class="btn" data-axis="diag3" data-angle="120"
+                                style="border-color: #ffff00;">D₃</button>
+                            <button class="btn" data-axis="diag4" data-angle="120"
+                                style="border-color: #ff8800;">D₄</button>
+                        </div>
+                    </div>
+
+                    <div class="rotation-category">
+                        <span class="label">Edge Rotations (Order 2)</span>
+                        <div class="btn-row">
+                            <button class="btn" data-axis="edge1" data-angle="180"
+                                style="border-color: #ff4400;">E₁</button>
+                            <button class="btn" data-axis="edge2" data-angle="180"
+                                style="border-color: #00ee66;">E₂</button>
+                            <button class="btn" data-axis="edge3" data-angle="180"
+                                style="border-color: #9900ff;">E₃</button>
+                        </div>
+                        <div class="btn-row" style="margin-top: 5px;">
+                            <button class="btn" data-axis="edge4" data-angle="180"
+                                style="border-color: #ffdd00;">E₄</button>
+                            <button class="btn" data-axis="edge5" data-angle="180"
+                                style="border-color: #ff0099;">E₅</button>
+                            <button class="btn" data-axis="edge6" data-angle="180"
+                                style="border-color: #00ccff;">E₆</button>
+                        </div>
+                    </div>
+
+                    <button id="reset-cube" class="btn danger" data-subgroup-hide>Reset</button>
+                    <button id="reset-view" class="btn secondary" data-subgroup-hide style="margin-top: 10px;">Reset View</button>
+                </div>
+
+                <div id="permutation-overlay" data-subgroup-hide
+                    style="margin-top: 20px; text-align: center; color: #69f0ae; font-size: 1.2rem; font-weight: bold; padding: 10px;">
+                    Permutation: e (Identity)
+                </div>
+                <div class="control-group" data-subgroup-hide>
+                    <label for="speed-slider" style="color: #777;">Animation Speed</label>
+                    <div style="display:flex;align-items:center;gap:10px;margin-top:10px;">
+                        <input id="speed-slider" type="range" min="1" max="100" value="49" aria-describedby="speed-value" />
+                        <span id="speed-value" style="min-width:48px;text-align:right;">0.15</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script src="../../cayley-graph.js"></script>
+        <script src="script.js"></script>
+    <script>
+    (function () {
+        var overlay = document.getElementById('ui-overlay');
+        var handle = overlay ? overlay.querySelector('.panel-handle') : null;
+        if (!overlay || !handle) return;
+        function toggle() { overlay.classList.toggle('panel-expanded'); }
+        handle.addEventListener('click', toggle);
+        var hdr = overlay.querySelector('header');
+        if (hdr) { hdr.style.cursor = 'pointer'; hdr.addEventListener('click', toggle); }
+        // Auto-hide panel on button press; delay the action until collapse finishes.
+        // Runs in capture phase to fire before Subgroup Builder's stopImmediatePropagation.
+        var controls = overlay.querySelector('.controls-section');
+        if (controls) {
+            controls.addEventListener('click', function (e) {
+                var btn = e.target.closest('.btn');
+                if (!btn || btn.classList.contains('subgroup-builder-btn')) return;
+                if (btn._deferredClick) return;          // re-dispatched — let through
+                if (!overlay.classList.contains('panel-expanded')) return; // already collapsed
+                e.stopImmediatePropagation();
+                e.preventDefault();
+                overlay.classList.remove('panel-expanded');
+                var fired = false;
+                function fire() {
+                    if (fired) return;
+                    fired = true;
+                    btn._deferredClick = true;
+                    btn.click();
+                    btn._deferredClick = false;
+                }
+                controls.addEventListener('transitionend', function onEnd(ev) {
+                    if (ev.propertyName !== 'max-height') return;
+                    controls.removeEventListener('transitionend', onEnd);
+                    fire();
+                });
+                setTimeout(fire, 400); // fallback in case transitionend does not fire
+            }, true);
+        }
+        // On mobile, shift the canvas so the 3D scene is centred above the collapsed panel strip.
+        if (window.matchMedia('(max-width: 640px)').matches) {
+            var cc = document.getElementById('canvas-container');
+            if (cc) {
+                // overlay is collapsed on load — its height is the panel strip height.
+                var shift = Math.round(overlay.getBoundingClientRect().height / 2);
+                cc.style.transform = 'translateY(-' + shift + 'px)';
+            }
+        }
+    })();
+    </script>
+</body>
+
+</html>

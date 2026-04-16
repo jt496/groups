@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<!--
+    Copyright (c) 2026 John Talbot. All rights reserved.
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+            http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+-->
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="description" content="Visualise the rotational symmetry group of a dodecahedron/icosahedron (A5, order 60) with interactive 3D rotations and a Cayley graph.">
+    <title>Dodecahedron Rotational Symmetry</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+
+    <!-- Load 3d-force-graph before Three.js to avoid initialization conflict -->
+    <script src="https://unpkg.com/3d-force-graph"></script>
+    <script>delete window.__THREE__;</script>
+    <!-- Standalone Three.js for OrbitControls and main app logic -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+</head>
+
+<body>
+    <div id="canvas-container">
+        <canvas id="cayley-canvas" aria-label="Interactive 3D visualisation of the dodecahedron rotational symmetry group (drag to rotate, scroll to zoom)"></canvas>
+    </div>
+
+    <div id="ui-overlay">
+        <div class="panel-handle" aria-hidden="true"></div>
+        <header>
+            <h1>Rotational symmetries of a <button id="poly-primary" class="poly-switch active-poly" onclick="switchPolyhedron(false)">dodecahedron</button> / <button id="poly-secondary" class="poly-switch inactive-poly" onclick="switchPolyhedron(true)">icosahedron</button></h1>
+            <a href="../index.html" class="back-link">← Symmetries of Polyhedra</a>
+        </header>
+
+        <div class="controls-section">
+            <div class="control-group">
+                <button id="subgroup-builder-btn" class="btn subgroup-builder-btn">Subgroup Builder</button>
+            </div>
+            <div id="generator-selector"></div>
+            <div class="control-group" data-subgroup-hide>
+                <h3>View Options</h3>
+                <div class="view-options">
+                    <div id="cube-toggles" class="btn-row" style="margin-top: 10px;"></div>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <div class="rotation-category">
+                    <span class="label">Face Rotations (Order 5)</span>
+                    <div class="btn-row" id="face-btns">
+                        <!-- Populated by script -->
+                    </div>
+                </div>
+
+                <div class="rotation-category">
+                    <span class="label">Vertex Rotations (Order 3)</span>
+                    <div class="btn-row" id="vertex-btns">
+                        <!-- Populated by script -->
+                    </div>
+                </div>
+
+                <div class="rotation-category">
+                    <span class="label">Edge Rotations (Order 2)</span>
+                    <div class="btn-row" id="edge-btns">
+                        <!-- Populated by script -->
+                    </div>
+                </div>
+
+                <button id="reset-cube" class="btn danger" data-subgroup-hide>Reset Dodecahedron</button>
+                <button id="reset-view" class="btn secondary" data-subgroup-hide style="margin-top: 10px;">Reset View</button>
+            </div>
+
+            <div id="permutation-overlay" data-subgroup-hide
+                style="margin-top: 20px; text-align: center; color: #69f0ae; font-size: 1.2rem; font-weight: bold; padding: 5px 10px;">
+                Permutation: e (Identity)
+            </div>
+
+            <div class="control-group" data-subgroup-hide>
+                <label for="speed-slider" class="label">Animation Speed</label>
+                <div style="display:flex;align-items:center;gap:10px;margin-top:10px;">
+                    <input id="speed-slider" type="range" min="1" max="100" value="49" aria-describedby="speed-value" />
+                    <span id="speed-value" style="min-width:40px;text-align:right;font-size:0.8rem;">0.15</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../../cayley-graph.js"></script>
+    <script src="script.js"></script>
+    <script>
+    (function () {
+        var overlay = document.getElementById('ui-overlay');
+        var handle = overlay ? overlay.querySelector('.panel-handle') : null;
+        if (!overlay || !handle) return;
+        function toggle() { overlay.classList.toggle('panel-expanded'); }
+        handle.addEventListener('click', toggle);
+        var hdr = overlay.querySelector('header');
+        if (hdr) { hdr.style.cursor = 'pointer'; hdr.addEventListener('click', toggle); }
+        // Auto-hide panel on button press; delay the action until collapse finishes.
+        // Runs in capture phase to fire before Subgroup Builder's stopImmediatePropagation.
+        var controls = overlay.querySelector('.controls-section');
+        if (controls) {
+            controls.addEventListener('click', function (e) {
+                var btn = e.target.closest('.btn');
+                if (!btn || btn.classList.contains('subgroup-builder-btn')) return;
+                if (btn._deferredClick) return;          // re-dispatched — let through
+                if (!overlay.classList.contains('panel-expanded')) return; // already collapsed
+                e.stopImmediatePropagation();
+                e.preventDefault();
+                overlay.classList.remove('panel-expanded');
+                var fired = false;
+                function fire() {
+                    if (fired) return;
+                    fired = true;
+                    btn._deferredClick = true;
+                    btn.click();
+                    btn._deferredClick = false;
+                }
+                controls.addEventListener('transitionend', function onEnd(ev) {
+                    if (ev.propertyName !== 'max-height') return;
+                    controls.removeEventListener('transitionend', onEnd);
+                    fire();
+                });
+                setTimeout(fire, 400); // fallback in case transitionend does not fire
+            }, true);
+        }
+        // On mobile, shift the canvas so the 3D scene is centred above the collapsed panel strip.
+        if (window.matchMedia('(max-width: 640px)').matches) {
+            var cc = document.getElementById('canvas-container');
+            if (cc) {
+                // overlay is collapsed on load — its height is the panel strip height.
+                var shift = Math.round(overlay.getBoundingClientRect().height / 2);
+                cc.style.transform = 'translateY(-' + shift + 'px)';
+            }
+        }
+    })();
+    </script>
+</body>
+
+</html>
