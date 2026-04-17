@@ -19,7 +19,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta name="description" content="Explore all 17 wallpaper groups — the symmetry groups of periodic plane patterns — with interactive pattern generation.">
+    <meta name="description"
+        content="Explore all 17 wallpaper groups — the symmetry groups of periodic plane patterns — with interactive pattern generation.">
     <title>Wallpaper Groups Explorer</title>
     <link rel="stylesheet" href="style.css">
     <!-- Google Fonts -->
@@ -34,10 +35,117 @@
     <!-- Non-module Three.js for file:// compatibility -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+    <style>
+        .info-btn {
+            background: transparent !important;
+            border: 1px solid #38bdf8 !important;
+            color: #38bdf8 !important;
+            border-radius: 50% !important;
+            width: 22px !important;
+            height: 22px !important;
+            font-size: 0.8rem !important;
+            cursor: pointer !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            transition: all 0.2s ease !important;
+            padding: 0 !important;
+            line-height: 1 !important;
+            flex-shrink: 0 !important;
+            vertical-align: middle !important;
+            margin-left: 0 !important;
+        }
+
+        .info-btn:hover {
+            background: rgba(56, 189, 248, 0.15) !important;
+            transform: scale(1.1) !important;
+        }
+
+        .subgroup-info-overlay {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            background: rgba(15, 23, 42, 0.9) !important;
+            backdrop-filter: blur(5px) !important;
+            -webkit-backdrop-filter: blur(5px) !important;
+            z-index: 10000 !important;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .subgroup-info-content {
+            background: #1e293b !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            border-radius: 12px !important;
+            padding: 24px !important;
+            max-width: 90% !important;
+            max-height: 90vh !important;
+            overflow-y: auto !important;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5) !important;
+            position: relative !important;
+            display: flex !important;
+            flex-direction: column !important;
+            color: #f8fafc !important;
+            font-family: 'Outfit', sans-serif !important;
+            text-align: left !important;
+        }
+
+        .subgroup-info-header {
+            display: flex !important;
+            justify-content: space-between !important;
+            align-items: center !important;
+            margin-bottom: 20px !important;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+            padding-bottom: 12px !important;
+        }
+
+        .subgroup-info-header h2 {
+            margin: 0 !important;
+            color: #38bdf8 !important;
+            font-size: 1.25rem !important;
+            font-weight: 600 !important;
+        }
+
+        .subgroup-info-close {
+            background: transparent !important;
+            border: none !important;
+            color: #94a3b8 !important;
+            font-size: 32px !important;
+            line-height: 1 !important;
+            cursor: pointer !important;
+            padding: 0 4px !important;
+            transition: color 0.2s !important;
+        }
+
+        .subgroup-info-close:hover {
+            color: #fff !important;
+        }
+
+        .subgroup-info-explorer-link {
+            color: #38bdf8 !important;
+            text-decoration: none !important;
+            font-weight: 600 !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            gap: 4px !important;
+            transition: opacity 0.2s !important;
+        }
+
+        .subgroup-info-explorer-link:hover {
+            opacity: 0.8 !important;
+            text-decoration: underline !important;
+        }
+    </style>
 </head>
 
 <body>
-    <div id="canvas-container" role="img" aria-label="Interactive visualisation of the selected wallpaper group tiling pattern (drag to rotate, scroll to zoom)"></div>
+    <div id="canvas-container" role="img"
+        aria-label="Interactive visualisation of the selected wallpaper group tiling pattern (drag to rotate, scroll to zoom)">
+    </div>
 
     <div id="ui-overlay">
         <div class="panel-handle" aria-hidden="true"></div>
@@ -123,51 +231,100 @@
 
     <script src="script.js"></script>
     <script>
-    (function () {
-        var overlay = document.getElementById('ui-overlay');
-        var handle = overlay ? overlay.querySelector('.panel-handle') : null;
-        if (!overlay || !handle) return;
-        function toggle() { overlay.classList.toggle('panel-expanded'); }
-        handle.addEventListener('click', toggle);
-        var hdr = overlay.querySelector('header');
-        if (hdr) { hdr.style.cursor = 'pointer'; hdr.addEventListener('click', toggle); }
-        var controls = overlay.querySelector('.controls-section');
-        if (controls) {
-            controls.addEventListener('click', function (e) {
-                var btn = e.target.closest('.btn');
-                var genrel = e.target.closest('[data-gen], [data-rel]');
-                var target = btn || genrel;
-                if (!target) return;
-                if (target._deferredClick) return;
-                if (!overlay.classList.contains('panel-expanded')) return;
-                e.stopImmediatePropagation();
-                e.preventDefault();
-                overlay.classList.remove('panel-expanded');
-                var fired = false;
-                function fire() {
-                    if (fired) return;
-                    fired = true;
-                    target._deferredClick = true;
-                    target.click();
-                    target._deferredClick = false;
-                }
-                controls.addEventListener('transitionend', function onEnd(ev) {
-                    if (ev.propertyName !== 'max-height') return;
-                    controls.removeEventListener('transitionend', onEnd);
-                    fire();
-                });
-                setTimeout(fire, 400);
-            }, true);
-        }
-        if (window.matchMedia('(max-width: 640px)').matches) {
-            var cc = document.getElementById('canvas-container');
-            if (cc) {
-                var shift = Math.round(overlay.getBoundingClientRect().height / 2);
-                cc.style.transform = 'translateY(-' + shift + 'px)';
+        (function () {
+            var overlay = document.getElementById('ui-overlay');
+            var handle = overlay ? overlay.querySelector('.panel-handle') : null;
+            if (!overlay || !handle) return;
+            function toggle() { overlay.classList.toggle('panel-expanded'); }
+            handle.addEventListener('click', toggle);
+            var hdr = overlay.querySelector('header');
+            if (hdr) { hdr.style.cursor = 'pointer'; hdr.addEventListener('click', toggle); }
+            var controls = overlay.querySelector('.controls-section');
+            if (controls) {
+                controls.addEventListener('click', function (e) {
+                    var btn = e.target.closest('.btn');
+                    var genrel = e.target.closest('[data-gen], [data-rel]');
+                    var target = btn || genrel;
+                    if (!target) return;
+                    if (target._deferredClick) return;
+                    if (!overlay.classList.contains('panel-expanded')) return;
+                    e.stopImmediatePropagation();
+                    e.preventDefault();
+                    overlay.classList.remove('panel-expanded');
+                    var fired = false;
+                    function fire() {
+                        if (fired) return;
+                        fired = true;
+                        target._deferredClick = true;
+                        target.click();
+                        target._deferredClick = false;
+                    }
+                    controls.addEventListener('transitionend', function onEnd(ev) {
+                        if (ev.propertyName !== 'max-height') return;
+                        controls.removeEventListener('transitionend', onEnd);
+                        fire();
+                    });
+                    setTimeout(fire, 400);
+                }, true);
             }
-        }
-    })();
+            if (window.matchMedia('(max-width: 640px)').matches) {
+                var cc = document.getElementById('canvas-container');
+                if (cc) {
+                    var shift = Math.round(overlay.getBoundingClientRect().height / 2);
+                    cc.style.transform = 'translateY(-' + shift + 'px)';
+                }
+            }
+        })();
     </script>
+
+
+
+
+    <!-- Subgroup Info Modal -->
+    <div id="subgroup-info-modal" class="subgroup-info-overlay" role="dialog" aria-modal="true">
+        <div class="subgroup-info-content">
+            <div class="subgroup-info-header">
+                <h2>Subgroup Builder</h2>
+                <button class="subgroup-info-close" id="subgroup-info-close" aria-label="Close dialog">&times;</button>
+            </div>
+            <div style="padding: 0; font-size: 0.95em; color: #cbd5e1; line-height: 1.6;">
+                <p style="margin-bottom: 12px;">In the <strong>Subgroup Builder</strong> you are exploring the structure
+                    of the subgroup generated by the elements you have chosen.</p>
+                <p style="margin-bottom: 8px;">The 3D window displays the <strong>Cayley graph</strong> of this
+                    subgroup:</p>
+                <ul style="margin: 0; padding-left: 20px; margin-bottom: 16px;">
+                    <li style="margin-bottom: 8px;"><strong>Vertices (Nodes):</strong> Represent the elements of the
+                        subgroup.</li>
+                    <li><strong>Edges (Lines):</strong> Represent multiplication by your chosen generators.</li>
+                </ul>
+                <div style="border-top: 1px solid rgba(255, 255, 255, 0.1); padding-top: 12px; margin-top: 12px;">
+                    <p style="margin-bottom: 8px; font-size: 0.9em;">For more on Cayley Graphs visit the:
+                        <a href="../../structure/cayley/index.html" class="subgroup-info-explorer-link">
+                            Cayley Graph Explorer <span>&rarr;</span>
+                        </a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        (function () {
+            const btn = document.getElementById('subgroup-info-btn');
+            const overlay = document.getElementById('subgroup-info-modal');
+            const closeBtn = document.getElementById('subgroup-info-close');
+            if (btn && overlay && closeBtn) {
+                btn.onclick = function (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    overlay.style.setProperty('display', 'flex', 'important');
+                };
+                const hide = function () { overlay.style.setProperty('display', 'none', 'important'); };
+                closeBtn.onclick = hide;
+                overlay.onclick = function (e) { if (e.target === overlay) hide(); };
+            }
+        })();
+    </script>
+
 </body>
 
 </html>

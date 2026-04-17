@@ -65,6 +65,20 @@
             border-color: #38bdf8;
         }
 
+        optgroup {
+            font-weight: 600;
+            color: #94a3b8; /* Subtle grey */
+            font-style: normal;
+            background: #0f172a; /* Darker background contrast */
+            padding: 5px 0;
+        }
+
+        optgroup option {
+            color: #fff;
+            background: #1e293b;
+            font-weight: 400;
+        }
+
         .legend {
             margin-top: 15px;
             font-size: 0.85rem;
@@ -309,6 +323,15 @@
             <option value="A5">Alternating Group A₅ (Truncated Icosahedron)</option>
             <option value="S5">Symmetric Group S₅</option>
             <option value="S6">Symmetric Group S₆</option>
+            <optgroup label="── Disconnected Subgraphs ──">
+                <option value="S4_SingleGen">S₄ (Single 4-cycle)</option>
+                <option value="S4_Disconnected_V4">S₄ (Two Transpositions)</option>
+                <option value="S4_Disconnected_A4">S₄ (Two 3-cycles)</option>
+                <option value="A5_SingleGen">A₅ (Single 5-cycle)</option>
+                <option value="A5_Disconnected_A4">A₅ (A₄ subgraphs)</option>
+                <option value="S5_SingleGen">S₅ (Single 5-cycle)</option>
+                <option value="S5_Disconnected_S4">S₅ (S₄ subgraphs)</option>
+            </optgroup>
         </select>
 
         <div id="group-description" class="description">Select a group to visualize its 3D Cayley Graph.</div>
@@ -483,7 +506,7 @@
                 </p>
                 <p>
                     &bull; The graph is <strong>vertex-transitive</strong> &mdash; every vertex looks the same,
-                    reflecting the fact that group elements are all "equivalent" under left multiplication.
+                    reflecting the fact that group elements are all "equivalent" under right multiplication.
                 </p>
                 <p>
                     &bull; The graph is <strong>connected</strong> if and only if S generates G.
@@ -492,7 +515,7 @@
                     &bull; Each vertex has <strong>out-degree |S|</strong>.
                 </p>
                 <p>
-                    &bull; Different choices of generating set S produce different (but isomorphic-as-groups)
+                    &bull; Different choices of generating set S produce different
                     Cayley graphs, which is why the same group can appear as several distinct polyhedra above.
                 </p>
                 <p>

@@ -237,15 +237,14 @@ input:checked+.slider:before {
 /* Subgroup Builder Styles */
 .subgroup-builder-btn {
     width: 100%;
-    background: var(--accent-blue);
-    color: var(--bg-color);
-    font-weight: 600;
-    border: none;
     margin-top: 10px;
+    color: var(--accent-blue);
+    border-color: var(--accent-blue);
+    font-weight: 600;
 }
 
 .subgroup-builder-btn:hover {
-    background: #7dd3fc;
+    background: rgba(56, 189, 248, 0.1);
 }
 
 #generator-selector {

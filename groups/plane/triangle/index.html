@@ -4,7 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta name="description" content="Visualise the triangle group and its symmetries with an interactive 3D hyperbolic tiling.">
+    <meta name="description"
+        content="Visualise the triangle group and its symmetries with an interactive 3D hyperbolic tiling.">
     <title>Triangle Groups Δ(l,m,n) — Group Theory Visualisations</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -16,10 +17,116 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+    <style>
+        .info-btn {
+            background: transparent !important;
+            border: 1px solid #38bdf8 !important;
+            color: #38bdf8 !important;
+            border-radius: 50% !important;
+            width: 22px !important;
+            height: 22px !important;
+            font-size: 0.8rem !important;
+            cursor: pointer !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            transition: all 0.2s ease !important;
+            padding: 0 !important;
+            line-height: 1 !important;
+            flex-shrink: 0 !important;
+            vertical-align: middle !important;
+            margin-left: 0 !important;
+        }
+
+        .info-btn:hover {
+            background: rgba(56, 189, 248, 0.15) !important;
+            transform: scale(1.1) !important;
+        }
+
+        .subgroup-info-overlay {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            background: rgba(15, 23, 42, 0.9) !important;
+            backdrop-filter: blur(5px) !important;
+            -webkit-backdrop-filter: blur(5px) !important;
+            z-index: 10000 !important;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .subgroup-info-content {
+            background: #1e293b !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            border-radius: 12px !important;
+            padding: 24px !important;
+            max-width: 90% !important;
+            max-height: 90vh !important;
+            overflow-y: auto !important;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5) !important;
+            position: relative !important;
+            display: flex !important;
+            flex-direction: column !important;
+            color: #f8fafc !important;
+            font-family: 'Outfit', sans-serif !important;
+            text-align: left !important;
+        }
+
+        .subgroup-info-header {
+            display: flex !important;
+            justify-content: space-between !important;
+            align-items: center !important;
+            margin-bottom: 20px !important;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+            padding-bottom: 12px !important;
+        }
+
+        .subgroup-info-header h2 {
+            margin: 0 !important;
+            color: #38bdf8 !important;
+            font-size: 1.25rem !important;
+            font-weight: 600 !important;
+        }
+
+        .subgroup-info-close {
+            background: transparent !important;
+            border: none !important;
+            color: #94a3b8 !important;
+            font-size: 32px !important;
+            line-height: 1 !important;
+            cursor: pointer !important;
+            padding: 0 4px !important;
+            transition: color 0.2s !important;
+        }
+
+        .subgroup-info-close:hover {
+            color: #fff !important;
+        }
+
+        .subgroup-info-explorer-link {
+            color: #38bdf8 !important;
+            text-decoration: none !important;
+            font-weight: 600 !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            gap: 4px !important;
+            transition: opacity 0.2s !important;
+        }
+
+        .subgroup-info-explorer-link:hover {
+            opacity: 0.8 !important;
+            text-decoration: underline !important;
+        }
+    </style>
 </head>
 
 <body>
-    <div id="canvas-container" role="img" aria-label="Interactive 3D visualisation of the triangle group tiling (drag to rotate, scroll to zoom)"></div>
+    <div id="canvas-container" role="img"
+        aria-label="Interactive 3D visualisation of the triangle group tiling (drag to rotate, scroll to zoom)"></div>
 
     <div id="tiling-overlay" class="hidden">
         <div class="spinner"></div>
@@ -35,107 +142,157 @@
             <a href="../index.html" class="back-link">← Plane Symmetries</a>
         </header>
         <div class="controls-section">
-        <div class="control-group" style="display: flex; gap: 0.5rem;">
-            <button id="redraw" class="btn" style="flex: 1;">Redraw</button>
-            <button id="reset-camera" class="btn" style="flex: 1;">Reset Camera</button>
-        </div>
-
-        <div class="control-group">
-            <label>Parameters (l, m, n):</label>
-            <div class="input-row">
-                <input type="number" id="l-val" value="2" min="2" step="1">
-                <input type="number" id="m-val" value="3" min="2" step="1">
-                <input type="number" id="n-val" value="7" min="2" step="1">
+            <div class="control-group" style="display: flex; gap: 0.5rem;">
+                <button id="redraw" class="btn" style="flex: 1;">Redraw</button>
+                <button id="reset-camera" class="btn" style="flex: 1;">Reset Camera</button>
             </div>
-        </div>
 
-        <div class="info-box">
-            <span class="label">Presentation:</span>
-            <div id="presentation-val">-</div>
-            <button id="animate-translation" class="btn"
-                style="width: 100%; margin-top: 0.75rem; padding: 0.5rem; font-size: 0.9em; background-color: #27272a; color: #38bdf8; border: 1px solid #38bdf8;">Möbius
-                Translation Flow</button>
-            <div id="translation-sequence"
-                style="text-align: center; margin-top: 0.5rem; min-height: 1.5em; color: #38bdf8; font-weight: 600; letter-spacing: 2px;">
+            <div class="control-group">
+                <label>Parameters (l, m, n):</label>
+                <div class="input-row">
+                    <input type="number" id="l-val" value="2" min="2" step="1">
+                    <input type="number" id="m-val" value="3" min="2" step="1">
+                    <input type="number" id="n-val" value="7" min="2" step="1">
+                </div>
             </div>
-        </div>
 
-        <div class="control-group">
-            <label for="speed-slider">Animation Speed: <span id="speed-val">1.0</span>x</label>
-            <input type="range" id="speed-slider" min="0.2" max="5.0" step="0.1" value="1.0" style="width: 100%;">
-        </div>
-
-
-        <div class="info-box">
-            <div class="stat">
-                <span class="label">Geometry:</span>
-                <span id="geometry-type" class="value">-</span>
+            <div class="info-box">
+                <span class="label">Presentation:</span>
+                <div id="presentation-val">-</div>
+                <button id="animate-translation" class="btn"
+                    style="width: 100%; margin-top: 0.75rem; padding: 0.5rem; font-size: 0.9em; background-color: #27272a; color: #38bdf8; border: 1px solid #38bdf8;">Möbius
+                    Translation Flow</button>
+                <div id="translation-sequence"
+                    style="text-align: center; margin-top: 0.5rem; min-height: 1.5em; color: #38bdf8; font-weight: 600; letter-spacing: 2px;">
+                </div>
             </div>
-            <div class="stat">
-                <span class="label">Curvature (k):</span>
-                <span id="curvature-val" class="value">-</span>
-            </div>
-        </div>
 
-        <div class="info-box curvature-note">
-            <p>The geometry is determined by the <em>angle excess</em> of the fundamental triangle. By Gauss–Bonnet, for
-                a geodesic triangle with angles α, β, γ:</p>
-            <p class="formula">α + β + γ − π = K · Area</p>
-            <p>Here α = π/l, β = π/m, γ = π/n, so the sign of</p>
-            <p class="formula">1/l + 1/m + 1/n − 1</p>
-            <p>determines K: positive → spherical, zero → Euclidean, negative → hyperbolic.</p>
-        </div>
+            <div class="control-group">
+                <label for="speed-slider">Animation Speed: <span id="speed-val">1.0</span>x</label>
+                <input type="range" id="speed-slider" min="0.2" max="5.0" step="0.1" value="1.0" style="width: 100%;">
+            </div>
+
+
+            <div class="info-box">
+                <div class="stat">
+                    <span class="label">Geometry:</span>
+                    <span id="geometry-type" class="value">-</span>
+                </div>
+                <div class="stat">
+                    <span class="label">Curvature (k):</span>
+                    <span id="curvature-val" class="value">-</span>
+                </div>
+            </div>
+
+            <div class="info-box curvature-note">
+                <p>The geometry is determined by the <em>angle excess</em> of the fundamental triangle. By Gauss–Bonnet,
+                    for
+                    a geodesic triangle with angles α, β, γ:</p>
+                <p class="formula">α + β + γ − π = K · Area</p>
+                <p>Here α = π/l, β = π/m, γ = π/n, so the sign of</p>
+                <p class="formula">1/l + 1/m + 1/n − 1</p>
+                <p>determines K: positive → spherical, zero → Euclidean, negative → hyperbolic.</p>
+            </div>
 
         </div><!-- /.controls-section -->
     </div><!-- /.ui-panel -->
 
     <script src="script.js"></script>
     <script>
-    (function () {
-        var overlay = document.querySelector('.ui-panel');
-        var handle = overlay ? overlay.querySelector('.panel-handle') : null;
-        if (!overlay || !handle) return;
-        function toggle() { overlay.classList.toggle('panel-expanded'); }
-        handle.addEventListener('click', toggle);
-        var hdr = overlay.querySelector('header');
-        if (hdr) { hdr.style.cursor = 'pointer'; hdr.addEventListener('click', toggle); }
-        var controls = overlay.querySelector('.controls-section');
-        if (controls) {
-            controls.addEventListener('click', function (e) {
-                var btn = e.target.closest('.btn');
-                var genrel = e.target.closest('[data-gen], [data-rel]');
-                var target = btn || genrel;
-                if (!target) return;
-                if (target._deferredClick) return;
-                if (!overlay.classList.contains('panel-expanded')) return;
-                e.stopImmediatePropagation();
-                e.preventDefault();
-                overlay.classList.remove('panel-expanded');
-                var fired = false;
-                function fire() {
-                    if (fired) return;
-                    fired = true;
-                    target._deferredClick = true;
-                    target.click();
-                    target._deferredClick = false;
-                }
-                controls.addEventListener('transitionend', function onEnd(ev) {
-                    if (ev.propertyName !== 'max-height') return;
-                    controls.removeEventListener('transitionend', onEnd);
-                    fire();
-                });
-                setTimeout(fire, 400);
-            }, true);
-        }
-        if (window.matchMedia('(max-width: 640px)').matches) {
-            var cc = document.getElementById('canvas-container');
-            if (cc) {
-                var shift = Math.round(overlay.getBoundingClientRect().height / 2);
-                cc.style.transform = 'translateY(-' + shift + 'px)';
+        (function () {
+            var overlay = document.querySelector('.ui-panel');
+            var handle = overlay ? overlay.querySelector('.panel-handle') : null;
+            if (!overlay || !handle) return;
+            function toggle() { overlay.classList.toggle('panel-expanded'); }
+            handle.addEventListener('click', toggle);
+            var hdr = overlay.querySelector('header');
+            if (hdr) { hdr.style.cursor = 'pointer'; hdr.addEventListener('click', toggle); }
+            var controls = overlay.querySelector('.controls-section');
+            if (controls) {
+                controls.addEventListener('click', function (e) {
+                    var btn = e.target.closest('.btn');
+                    var genrel = e.target.closest('[data-gen], [data-rel]');
+                    var target = btn || genrel;
+                    if (!target) return;
+                    if (target._deferredClick) return;
+                    if (!overlay.classList.contains('panel-expanded')) return;
+                    e.stopImmediatePropagation();
+                    e.preventDefault();
+                    overlay.classList.remove('panel-expanded');
+                    var fired = false;
+                    function fire() {
+                        if (fired) return;
+                        fired = true;
+                        target._deferredClick = true;
+                        target.click();
+                        target._deferredClick = false;
+                    }
+                    controls.addEventListener('transitionend', function onEnd(ev) {
+                        if (ev.propertyName !== 'max-height') return;
+                        controls.removeEventListener('transitionend', onEnd);
+                        fire();
+                    });
+                    setTimeout(fire, 400);
+                }, true);
             }
-        }
-    })();
+            if (window.matchMedia('(max-width: 640px)').matches) {
+                var cc = document.getElementById('canvas-container');
+                if (cc) {
+                    var shift = Math.round(overlay.getBoundingClientRect().height / 2);
+                    cc.style.transform = 'translateY(-' + shift + 'px)';
+                }
+            }
+        })();
     </script>
+
+
+
+
+    <!-- Subgroup Info Modal -->
+    <div id="subgroup-info-modal" class="subgroup-info-overlay" role="dialog" aria-modal="true">
+        <div class="subgroup-info-content">
+            <div class="subgroup-info-header">
+                <h2>Subgroup Builder</h2>
+                <button class="subgroup-info-close" id="subgroup-info-close" aria-label="Close dialog">&times;</button>
+            </div>
+            <div style="padding: 0; font-size: 0.95em; color: #cbd5e1; line-height: 1.6;">
+                <p style="margin-bottom: 12px;">In the <strong>Subgroup Builder</strong> you are exploring the structure
+                    of the subgroup generated by the elements you have chosen.</p>
+                <p style="margin-bottom: 8px;">The 3D window displays the <strong>Cayley graph</strong> of this
+                    subgroup:</p>
+                <ul style="margin: 0; padding-left: 20px; margin-bottom: 16px;">
+                    <li style="margin-bottom: 8px;"><strong>Vertices (Nodes):</strong> Represent the elements of the
+                        subgroup.</li>
+                    <li><strong>Edges (Lines):</strong> Represent multiplication by your chosen generators.</li>
+                </ul>
+                <div style="border-top: 1px solid rgba(255, 255, 255, 0.1); padding-top: 12px; margin-top: 12px;">
+                    <p style="margin-bottom: 8px; font-size: 0.9em;">For more on Cayley Graphs visit the:
+                        <a href="../../structure/cayley/index.html" class="subgroup-info-explorer-link">
+                            Cayley Graph Explorer <span>&rarr;</span>
+                        </a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        (function () {
+            const btn = document.getElementById('subgroup-info-btn');
+            const overlay = document.getElementById('subgroup-info-modal');
+            const closeBtn = document.getElementById('subgroup-info-close');
+            if (btn && overlay && closeBtn) {
+                btn.onclick = function (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    overlay.style.setProperty('display', 'flex', 'important');
+                };
+                const hide = function () { overlay.style.setProperty('display', 'none', 'important'); };
+                closeBtn.onclick = hide;
+                overlay.onclick = function (e) { if (e.target === overlay) hide(); };
+            }
+        })();
+    </script>
+
 </body>
 
 </html>
