@@ -284,33 +284,68 @@ document.addEventListener('DOMContentLoaded', () => {
                         const isInjective = (size === imageSize);
                         const isIso = isSurjective && isInjective;
 
-                        const selectedOption = gSelect.options[gSelect.selectedIndex];
-                        const latexNames = {
-                            "C3": "C_3", "C4": "C_4", "C6": "C_6", "C2xC2": "V_4",
-                            "S3": "S_3", "D4": "D_4", "Q8": "Q_8", "D6": "D_6",
-                            "A4": "A_4", "S4": "S_4", "F20": "F_{20}", "A5": "A_5", "S5": "S_5"
-                        };
-                        const gName = gSelect.value === "" ? "G" : (latexNames[gSelect.value] || selectedOption.text.split('(')[0].trim().replace(/.*Group\s+/, '') || gSelect.value);
+                        const hOrder = currentHGroup.order;
                         const hLatexName = currentHGroup.name.replace(/<sup>(.*?)<\/sup>/g, '^{$1}').replace(/<sub>(.*?)<\/sub>/g, '_{$1}');
 
-                        const gOrderMsg = (gSelect.value === "")
-                            ? `Determined \\(|G| = ${size}\\) using Todd-Coxeter and we know \\(|${hLatexName}| = ${currentHGroup.order}\\).`
-                            : `We know \\(|${gName}| = ${size}\\) and \\(|${hLatexName}| = ${currentHGroup.order}\\).`;
+                        // Get a nice name for G
+                        let gName = "G";
+                        if (gSelect.value !== "") {
+                            const latexNames = {
+                                "C3": "C_3", "C4": "C_4", "C6": "C_6", "C2xC2": "V_4",
+                                "S3": "S_3", "D4": "D_4", "Q8": "Q_8", "D6": "D_6",
+                                "A4": "A_4", "S4": "S_4", "F20": "F_{20}", "A5": "A_5", "S5": "S_5"
+                            };
+                            gName = latexNames[gSelect.value] || gSelect.value;
+                        }
 
-                        let isoHTML = `<p>${gOrderMsg}</p>
-                                       <ul style="margin-top: 0.5rem; margin-left: 1.5rem; line-height: 1.6; color: var(--text-secondary);">
-                                           <li>Surjective? ${isSurjective ? '<span class="eval-pass">\u2714 Yes</span> (Image order = Target order)' : '<span class="eval-fail">\u2718 No</span>'}</li>
-                                           <li>Injective? ${isInjective ? '<span class="eval-pass">\u2714 Yes</span> (Domain order = Image order)' : '<span class="eval-fail">\u2718 No</span>'}</li>
+                        let summaryMsg = "";
+                        if (size > hOrder) {
+                            summaryMsg = `Since \\(|${gName}| > |${hLatexName}|\\) (${size} > ${hOrder}), this map <strong>cannot</strong> be an isomorphism as it cannot be injective (by the Pigeonhole Principle).`;
+                        } else if (size < hOrder) {
+                            summaryMsg = `Since \\(|${gName}| < |${hLatexName}|\\) (${size} < ${hOrder}), this map <strong>cannot</strong> be an isomorphism as it cannot be surjective.`;
+                        } else if (size === hOrder && !isIso) {
+                            summaryMsg = `Although \\(|${gName}| = |${hLatexName}| = ${size}\\), this map is not an isomorphism because it is not bijective.`;
+                        } else {
+                            summaryMsg = `We found \\(|${gName}| = |${hLatexName}| = ${size}\\).`;
+                        }
+
+                        let isoHTML = `<p>${summaryMsg}</p>
+                                       <ul style="margin-top: 0.8rem; margin-left: 1.5rem; line-height: 1.6; color: var(--text-secondary);">
+                                           <li>Surjective? ${isSurjective ? '<span class="eval-pass">\u2714 Yes</span> (Image order = Target order)' : '<span class="eval-fail">\u2718 No</span>' + (imageSize < hOrder ? ` (Image order ${imageSize} < ${hOrder})` : '')}</li>
+                                           <li>Injective? ${isInjective ? '<span class="eval-pass">\u2714 Yes</span> (Domain order = Image order)' : '<span class="eval-fail">\u2718 No</span>' + (size > imageSize ? ` (Domain order ${size} > Image order ${imageSize})` : '')}</li>
                                        </ul>
                                        <p style="margin-top: 1rem; font-weight: bold; font-size: 1.1rem; color: ${isIso ? 'var(--success)' : 'var(--text-primary)'}">
                                            ${isIso ? '\u2714 This map IS an isomorphism!' : '\u2718 This map is NOT an isomorphism.'}
                                        </p>`;
                         isoContent.innerHTML = isoHTML;
-                        if (window.MathJax) {
-                            MathJax.typesetPromise([isoContent]).catch(err => console.log(err));
-                        }
                     } else {
-                        isoContent.innerHTML = `<p style="color: var(--text-secondary);">Could not determine \\(|G|\\) (Group might be infinite or too large). Cannot check injectivity computationally here.</p>`;
+                        // Possibly infinite
+                        const hOrder = currentHGroup.order;
+                        const hLatexName = currentHGroup.name.replace(/<sup>(.*?)<\/sup>/g, '^{$1}').replace(/<sub>(.*?)<\/sub>/g, '_{$1}');
+                        
+                        let infiniteReason = null;
+                        if (typeof checkDefinitelyInfinite !== 'undefined') {
+                            infiniteReason = checkDefinitelyInfinite(gens, parsedRels);
+                        }
+
+                        if (infiniteReason) {
+                            isoContent.innerHTML = `
+                                <div style="padding: 1rem; background: rgba(244, 63, 94, 0.1); border-left: 4px solid var(--error); border-radius: 4px; margin-bottom: 1rem;">
+                                    <p style="color: var(--error); font-weight: 600; margin-bottom: 0.5rem;">Domain \\(G\\) is infinite</p>
+                                    <p style="font-size: 0.95rem; line-height: 1.5;">${infiniteReason}</p>
+                                </div>
+                                <p>Since \\(G\\) is an <strong>infinite group</strong> and the target group \\(${hLatexName}\\) is <strong>finite</strong> (order ${hOrder}), there can be no bijection between them.</p>
+                                <p style="margin-top: 1rem; font-weight: bold; font-size: 1.1rem; color: var(--error);">
+                                    \u2718 This map is NOT an isomorphism.
+                                </p>`;
+                        } else {
+                            isoContent.innerHTML = `
+                                <p style="color: var(--text-secondary); margin-bottom: 1rem;">Could not determine a finite order for \\(G\\) (it may be infinite or too large for the current computational limit).</p>
+                                <p>If \\(G\\) is indeed infinite or simply larger than \\(|${hLatexName}| = ${hOrder}\\), then any map to \\(${hLatexName}\\) is <strong>obviously not an isomorphism</strong> as it fails to be injective.</p>
+                                <p style="margin-top: 1rem; font-weight: bold; font-size: 1.1rem; color: var(--text-primary);">
+                                    \u2718 This map is likely NOT an isomorphism.
+                                </p>`;
+                        }
                     }
                 } else {
                     isoContent.innerHTML = `<p style="color: var(--error);">Todd-Coxeter solver not found.</p>`;
