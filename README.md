@@ -1,6 +1,6 @@
 # Group Theory — Interactive Visualisations
 
-A collection of interactive web-based visualisations for exploring group theory, built for the [MATH0043 Mathematics for Physics and Astronomy](https://www.ucl.ac.uk/module-catalogue/modules/MATH0043) module at [UCL](https://www.ucl.ac.uk/).
+A collection of interactive web-based visualisations for exploring group theory, built for the [MATH0043 Mathematics for Physics and Astronomy](https://www.ucl.ac.uk/module-catalogue/modules/MATH0043) module at [UCL](https://www.ucl.ac.uk/) with lots of help from Claude and Gemini.
 
 **🌐 Live site: [jt496.github.io/groups](https://jt496.github.io/groups/)**
 
