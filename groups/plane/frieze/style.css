@@ -261,6 +261,25 @@ input[type="range"]::-webkit-slider-thumb {
 .rel-link:hover { color: #22d3ee; background: rgba(34, 211, 238, 0.12); }
 
 
+/* === Scrollbar === */
+::-webkit-scrollbar {
+    width: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+
 /* === Accessibility === */
 :focus-visible {
     outline: 3px solid var(--accent-color, #38bdf8);

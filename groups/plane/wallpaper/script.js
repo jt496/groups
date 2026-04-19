@@ -171,7 +171,7 @@ const GROUPS = {
             { rel: 'conj_gamma', tex: '(\\sigma\\gamma)^2' }, { tex: ',\\;' },
             { rel: 'comm_st2', tex: '[\\sigma,t_2]' }, { tex: ',\\;' },
             { rel: 'conj_t2', tex: '\\gamma t_2 \\gamma^{-1} t_2' },
-            { tex: '\\,\\rangle \\quad (t_1=\\gamma^2)' }
+            { tex: '\\,\\rangle \\quad (t_1=\\gamma^2,\\; C_2=\\sigma\\gamma)' }
         ],
         genMap: { t2: { type: 'trans', which: 'v2' }, sigma: { type: 'sym', idx: 1 }, gamma: { type: 'sym', idx: 3 } },
         relSeqs: {
@@ -298,7 +298,8 @@ const GROUPS = {
             { rel: 'conjt2_C4', tex: 'C_4 t_2 C_4^{-1}t_1^{-1}' }, { tex: ',\\;' },
             { rel: 'conjt1_s', tex: '\\sigma t_1\\sigma t_2^{-1}' }, { tex: ',\\;' },
             { rel: 'conjt2_s', tex: '\\sigma t_2\\sigma t_1^{-1}' }, { tex: ',\\;' },
-            { rel: 'conj_C4_s', tex: '\\sigma C_4\\sigma C_4 t_2' }, { tex: '\\,\\rangle' }
+            { rel: 'conj_C4_s', tex: '\\sigma C_4\\sigma C_4 t_2' }, { tex: '\\,\\rangle' },
+            { tex: '\\quad (\\gamma_1 = C_4^{-1}\\sigma t_1,\\; \\gamma_2 = \\sigma C_4^{-1})' }
         ],
         genMap: { t1: { type: 'trans', which: 'v1' }, t2: { type: 'trans', which: 'v2' }, C4: { type: 'sym', idx: 1 }, sigma: { type: 'sym', idx: 4 } },
         relSeqs: {
@@ -312,7 +313,7 @@ const GROUPS = {
         }
     },
     p3: {
-        v1: [1, 0], v2: [0.5, 0.866],
+        v1: [1, 0], v2: [0.5, Math.sqrt(3) / 2],
         syms: [
             { type: 'id', label: 'e' },
             { type: 'rot', angle: 2 * Math.PI / 3, center: [0, 0], label: 'C₃', gen: true },
@@ -335,7 +336,7 @@ const GROUPS = {
         }
     },
     p3m1: {
-        v1: [1, 0], v2: [0.5, 0.866],
+        v1: [1, 0], v2: [0.5, Math.sqrt(3) / 2],
         syms: [
             { type: 'id', label: 'e' }, { type: 'rot', angle: 2 * Math.PI / 3, center: [0, 0], label: 'C₃', gen: true }, { type: 'rot', angle: 4 * Math.PI / 3, center: [0, 0], label: 'C₃²', power: true },
             { type: 'refl', angle: Math.PI / 6, center: [0, 0], label: 'σ₁', gen: true }, { type: 'refl', angle: Math.PI / 2, center: [0, 0], label: 'σ₂' }, { type: 'refl', angle: 5 * Math.PI / 6, center: [0, 0], label: 'σ₃' }
@@ -363,7 +364,7 @@ const GROUPS = {
         }
     },
     p31m: {
-        v1: [1, 0], v2: [0.5, 0.866],
+        v1: [1, 0], v2: [0.5, Math.sqrt(3) / 2],
         syms: [
             { type: 'id', label: 'e' }, { type: 'rot', angle: 2 * Math.PI / 3, center: [0, 0], label: 'C₃', gen: true }, { type: 'rot', angle: 4 * Math.PI / 3, center: [0, 0], label: 'C₃²', power: true },
             { type: 'refl', angle: 0, center: [0, 0], label: 'σ₁', gen: true }, { type: 'refl', angle: Math.PI / 3, center: [0, 0], label: 'σ₂' }, { type: 'refl', angle: 2 * Math.PI / 3, center: [0, 0], label: 'σ₃' }
@@ -391,7 +392,7 @@ const GROUPS = {
         }
     },
     p6: {
-        v1: [1, 0], v2: [0.5, 0.866],
+        v1: [1, 0], v2: [0.5, Math.sqrt(3) / 2],
         syms: [
             { type: 'id', label: 'e' }, { type: 'rot', angle: Math.PI / 3, center: [0, 0], label: 'C₆', gen: true }, { type: 'rot', angle: 2 * Math.PI / 3, center: [0, 0], label: 'C₃', power: true },
             { type: 'rot', angle: Math.PI, center: [0, 0], label: 'C₂', power: true }, { type: 'rot', angle: 4 * Math.PI / 3, center: [0, 0], label: 'C₃²', power: true }, { type: 'rot', angle: 5 * Math.PI / 3, center: [0, 0], label: 'C₆⁵', power: true }
@@ -413,7 +414,7 @@ const GROUPS = {
         }
     },
     p6m: {
-        v1: [1, 0], v2: [0.5, 0.866],
+        v1: [1, 0], v2: [0.5, Math.sqrt(3) / 2],
         syms: [
             { type: 'id', label: 'e' }, { type: 'rot', angle: Math.PI / 3, center: [0, 0], label: 'C₆', gen: true }, { type: 'rot', angle: 2 * Math.PI / 3, center: [0, 0], label: 'C₃', power: true },
             { type: 'rot', angle: Math.PI, center: [0, 0], label: 'C₂', power: true }, { type: 'rot', angle: 4 * Math.PI / 3, center: [0, 0], label: 'C₃²', power: true }, { type: 'rot', angle: 5 * Math.PI / 3, center: [0, 0], label: 'C₆⁵', power: true },
