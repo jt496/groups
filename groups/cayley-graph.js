@@ -944,17 +944,35 @@ const CayleyGraph = (() => {
 
     let globalGraph3DInstance = null;
     let globalGraph3DContainer = null;
+    let globalGraph3DBackground = null;
 
     function setup3DContainer(parent) {
+        if (!globalGraph3DBackground) {
+            // Full-viewport dark background — stays at left:0 so it fills behind the panel
+            globalGraph3DBackground = document.createElement('div');
+            globalGraph3DBackground.style.position = 'fixed';
+            globalGraph3DBackground.style.top = '0';
+            globalGraph3DBackground.style.left = '0';
+            globalGraph3DBackground.style.width = '100vw';
+            globalGraph3DBackground.style.height = '100vh';
+            globalGraph3DBackground.style.zIndex = '1';
+            globalGraph3DBackground.style.backgroundColor = '#0f172a';
+            globalGraph3DBackground.style.pointerEvents = 'none';
+            globalGraph3DBackground.style.display = 'none';
+            globalGraph3DBackground.id = 'cayley-3d-background';
+            document.body.appendChild(globalGraph3DBackground);
+        }
         if (!globalGraph3DContainer) {
+            // Hit-test container — positioned to match the visible graph area so hover is correct
             globalGraph3DContainer = document.createElement('div');
             globalGraph3DContainer.style.position = 'fixed';
             globalGraph3DContainer.style.top = '0';
             globalGraph3DContainer.style.left = '0';
             globalGraph3DContainer.style.width = '100vw';
             globalGraph3DContainer.style.height = '100vh';
-            globalGraph3DContainer.style.zIndex = '1';
-            globalGraph3DContainer.style.backgroundColor = '#0f172a';
+            globalGraph3DContainer.style.zIndex = '2';
+            globalGraph3DContainer.style.backgroundColor = 'transparent';
+            globalGraph3DContainer.style.display = 'none';
             globalGraph3DContainer.id = 'cayley-3d-container';
             document.body.appendChild(globalGraph3DContainer);
         }
@@ -1010,6 +1028,7 @@ const CayleyGraph = (() => {
         });
 
         const container = setup3DContainer(parent);
+        if (globalGraph3DBackground) globalGraph3DBackground.style.display = 'block';
         container.style.display = 'block';
         console.log('[render3DCayleyGraph] 3D container:', container, '| offsetWidth:', container.offsetWidth, '| offsetHeight:', container.offsetHeight);
 
@@ -1205,6 +1224,7 @@ const CayleyGraph = (() => {
 
             if (window.ForceGraph3D) {
                 if (cayleyCanvas) cayleyCanvas.style.display = 'none';
+                if (globalGraph3DBackground) globalGraph3DBackground.style.display = 'block';
                 if (globalGraph3DContainer) globalGraph3DContainer.style.display = 'block';
                 console.log('[SubgroupBuilder] 3D mode: hiding cayleyCanvas, showing 3D container (if exists)');
             } else if (cayleyCanvas) {
@@ -1256,11 +1276,11 @@ const CayleyGraph = (() => {
             // On desktop, offset the graph so it is centred in the non-panel area
             if (window.ForceGraph3D && window.innerWidth > 640) {
                 requestAnimationFrame(() => {
-                    if (globalGraph3DInstance) {
+                    if (globalGraph3DInstance && globalGraph3DContainer) {
                         const panelW = 340;
                         globalGraph3DInstance.width(window.innerWidth - panelW);
-                        const canvas = globalGraph3DInstance.renderer().domElement;
-                        canvas.style.marginLeft = panelW + 'px';
+                        globalGraph3DContainer.style.left = panelW + 'px';
+                        globalGraph3DContainer.style.width = (window.innerWidth - panelW) + 'px';
                     }
                 });
             }
@@ -1311,14 +1331,15 @@ const CayleyGraph = (() => {
 
             // Hide Cayley canvas and order display
             if (cayleyCanvas) cayleyCanvas.style.display = 'none';
+            if (globalGraph3DBackground) globalGraph3DBackground.style.display = 'none';
             if (globalGraph3DContainer) {
                 globalGraph3DContainer.style.display = 'none';
                 if (globalGraph3DInstance) {
                     // Reset graph width to full viewport for next time
                     if (window.ForceGraph3D) {
                         globalGraph3DInstance.width(window.innerWidth);
-                        const canvas = globalGraph3DInstance.renderer().domElement;
-                        canvas.style.marginLeft = '0';
+                        globalGraph3DContainer.style.left = '0';
+                        globalGraph3DContainer.style.width = '100vw';
                     }
                     // Clear data to remove nodes/links from the scene
                     globalGraph3DInstance.graphData({ nodes: [], links: [] });

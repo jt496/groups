@@ -19,9 +19,25 @@ const legendEl = document.getElementById('legend');
 
 let graph3DInstance = null;
 let graph3DContainer = null;
+let graph3DBackground = null;
 
 function setup3DContainer(parent) {
+    if (!graph3DBackground) {
+        // Full-viewport dark background — stays at left:0 so it fills behind the panel
+        graph3DBackground = document.createElement('div');
+        graph3DBackground.style.position = 'fixed';
+        graph3DBackground.style.top = '0';
+        graph3DBackground.style.left = '0';
+        graph3DBackground.style.width = '100vw';
+        graph3DBackground.style.height = '100vh';
+        graph3DBackground.style.zIndex = '-1';
+        graph3DBackground.style.backgroundColor = '#0f172a';
+        graph3DBackground.style.pointerEvents = 'none';
+        graph3DBackground.style.display = 'none';
+        document.body.appendChild(graph3DBackground);
+    }
     if (!graph3DContainer) {
+        // Hit-test container — positioned to match the visible graph area so hover is correct
         graph3DContainer = document.createElement('div');
         graph3DContainer.style.position = 'fixed';
         graph3DContainer.style.top = '0';
@@ -29,7 +45,7 @@ function setup3DContainer(parent) {
         graph3DContainer.style.width = '100vw';
         graph3DContainer.style.height = '100vh';
         graph3DContainer.style.zIndex = '0';
-        graph3DContainer.style.backgroundColor = '#0f172a';
+        graph3DContainer.style.backgroundColor = 'transparent';
         document.body.appendChild(graph3DContainer);
     }
     return graph3DContainer;
@@ -45,8 +61,11 @@ function resizeCanvas() {
     if (graph3DInstance) {
         graph3DInstance.width(window.innerWidth - panelW);
         graph3DInstance.height(window.innerHeight);
-        const canvas = graph3DInstance.renderer().domElement;
-        canvas.style.marginLeft = panelW + 'px';
+        if (graph3DContainer) {
+            graph3DContainer.style.left = panelW + 'px';
+            graph3DContainer.style.width = (window.innerWidth - panelW) + 'px';
+        }
+        // graph3DBackground stays full-width to cover behind the panel
     }
 }
 window.addEventListener('resize', resizeCanvas);
@@ -2193,6 +2212,7 @@ function updateGraph() {
         // Fallback to 2D
         console.warn("3d-force-graph not detected. Falling back to 2D.");
         if (graph3DContainer) graph3DContainer.style.display = 'none';
+        if (graph3DBackground) graph3DBackground.style.display = 'none';
         fallbackCanvas.style.display = 'block';
 
         const W = fallbackCanvas.width;
@@ -2310,6 +2330,7 @@ function render3DCayleyGraph(parent, elements, multiplicationTable, generators, 
     // 3. Render
     const container = setup3DContainer(parent);
     if (fallbackCanvas) fallbackCanvas.style.display = 'none';
+    if (graph3DBackground) graph3DBackground.style.display = 'block';
     container.style.display = 'block';
 
     if (!graph3DInstance) {
@@ -2416,8 +2437,9 @@ function render3DCayleyGraph(parent, elements, multiplicationTable, generators, 
         if (window.innerWidth > 640) {
             const panelW = 310;
             graph3DInstance.width(window.innerWidth - panelW);
-            const canvas = graph3DInstance.renderer().domElement;
-            canvas.style.marginLeft = panelW + 'px';
+            const container = setup3DContainer(parent);
+            container.style.left = panelW + 'px';
+            container.style.width = (window.innerWidth - panelW) + 'px';
         }
     });
 
