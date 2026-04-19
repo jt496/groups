@@ -380,3 +380,11 @@ input[type="range"]::-webkit-slider-thumb {
         display: none;
     }
 }
+
+/* === Desktop: offset canvas behind control panel === */
+@media (min-width: 641px) {
+    #canvas-container {
+        left: 170px;
+        width: calc(100% - 170px);
+    }
+}

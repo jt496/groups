@@ -121,12 +121,13 @@ window.addEventListener('load', () => {
 
 function init() {
     scene = new THREE.Scene();
-    camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+    const container = document.getElementById('canvas-container');
+    camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 100);
     camera.position.set(6, 6, 8);
     renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setSize(container.clientWidth, container.clientHeight);
     renderer.setPixelRatio(window.devicePixelRatio);
-    document.getElementById('canvas-container').appendChild(renderer.domElement);
+    container.appendChild(renderer.domElement);
     controls = new THREE.OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
@@ -599,7 +600,7 @@ function updateInversionAnimation() {
     }
 }
 
-function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); }
+function onWindowResize() { const container = document.getElementById('canvas-container'); camera.aspect = container.clientWidth / container.clientHeight; camera.updateProjectionMatrix(); renderer.setSize(container.clientWidth, container.clientHeight); }
 
 function computePermutationFromMatrix(m) {
     const p = [];

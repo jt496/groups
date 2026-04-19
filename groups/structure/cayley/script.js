@@ -23,12 +23,14 @@ let graph3DContainer = null;
 function setup3DContainer(parent) {
     if (!graph3DContainer) {
         graph3DContainer = document.createElement('div');
-        graph3DContainer.style.width = '100%';
-        graph3DContainer.style.height = '100%';
-        graph3DContainer.style.position = 'absolute';
+        graph3DContainer.style.position = 'fixed';
         graph3DContainer.style.top = '0';
         graph3DContainer.style.left = '0';
-        parent.appendChild(graph3DContainer);
+        graph3DContainer.style.width = '100vw';
+        graph3DContainer.style.height = '100vh';
+        graph3DContainer.style.zIndex = '0';
+        graph3DContainer.style.backgroundColor = '#0f172a';
+        document.body.appendChild(graph3DContainer);
     }
     return graph3DContainer;
 }
@@ -37,11 +39,14 @@ function setup3DContainer(parent) {
 // Resize Handler
 // --------------------------------------------------
 function resizeCanvas() {
+    const panelW = window.innerWidth > 640 ? 310 : 0;
     fallbackCanvas.width = window.innerWidth;
     fallbackCanvas.height = window.innerHeight;
     if (graph3DInstance) {
-        graph3DInstance.width(window.innerWidth);
+        graph3DInstance.width(window.innerWidth - panelW);
         graph3DInstance.height(window.innerHeight);
+        const canvas = graph3DInstance.renderer().domElement;
+        canvas.style.marginLeft = panelW + 'px';
     }
 }
 window.addEventListener('resize', resizeCanvas);
@@ -2405,6 +2410,16 @@ function render3DCayleyGraph(parent, elements, multiplicationTable, generators, 
     const charge = options.chargeStrength !== undefined ? options.chargeStrength : (fixedPositions ? -30 : -120);
     graph3DInstance.d3Force('charge').strength(charge);
     graph3DInstance.numDimensions(3);
+
+    // On desktop, offset the graph so it's centred in the area to the right of the panel
+    requestAnimationFrame(() => {
+        if (window.innerWidth > 640) {
+            const panelW = 310;
+            graph3DInstance.width(window.innerWidth - panelW);
+            const canvas = graph3DInstance.renderer().domElement;
+            canvas.style.marginLeft = panelW + 'px';
+        }
+    });
 
     // Adjust camera for torus/cylinder view
     if (surfaceType === 'torus' || surfaceType === 'cylinder') {

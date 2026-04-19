@@ -819,3 +819,11 @@ input[type="range"]::-webkit-slider-thumb {
     background: var(--accent-color, #38bdf8);
     cursor: pointer;
 }
+
+/* === Desktop: offset canvas behind control panel === */
+@media (min-width: 641px) {
+    #canvas-container {
+        left: 340px;
+        width: calc(100% - 340px);
+    }
+}

@@ -332,7 +332,7 @@ function init() {
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.6); scene.add(ambientLight);
     const dirLight = new THREE.DirectionalLight(0xffffff, 0.8); dirLight.position.set(5, 5, 10); scene.add(dirLight);
     scene.add(tilingGroup); scene.add(latticeGroup); scene.add(symmetryOverlayGroup);
-    setupUI(); updateTiling('p1');
+    setupUI(); updateTiling(document.getElementById('group-select').value);
     window.addEventListener('resize', onWindowResize);
     document.getElementById('show-symmetries').addEventListener('change', updateSymmetryOverlay);
     animate();

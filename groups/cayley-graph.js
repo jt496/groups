@@ -948,14 +948,15 @@ const CayleyGraph = (() => {
     function setup3DContainer(parent) {
         if (!globalGraph3DContainer) {
             globalGraph3DContainer = document.createElement('div');
-            globalGraph3DContainer.style.width = '100%';
-            globalGraph3DContainer.style.height = '100%';
-            globalGraph3DContainer.style.position = 'absolute';
+            globalGraph3DContainer.style.position = 'fixed';
             globalGraph3DContainer.style.top = '0';
             globalGraph3DContainer.style.left = '0';
+            globalGraph3DContainer.style.width = '100vw';
+            globalGraph3DContainer.style.height = '100vh';
+            globalGraph3DContainer.style.zIndex = '1';
             globalGraph3DContainer.style.backgroundColor = '#0f172a';
             globalGraph3DContainer.id = 'cayley-3d-container';
-            parent.appendChild(globalGraph3DContainer);
+            document.body.appendChild(globalGraph3DContainer);
         }
         return globalGraph3DContainer;
     }
@@ -1207,12 +1208,18 @@ const CayleyGraph = (() => {
                 if (globalGraph3DContainer) globalGraph3DContainer.style.display = 'block';
                 console.log('[SubgroupBuilder] 3D mode: hiding cayleyCanvas, showing 3D container (if exists)');
             } else if (cayleyCanvas) {
+                // Move canvas to body so it covers the full viewport, including behind the panel
+                document.body.appendChild(cayleyCanvas);
+                cayleyCanvas.style.position = 'fixed';
+                cayleyCanvas.style.left = '0';
+                cayleyCanvas.style.top = '0';
+                cayleyCanvas.style.zIndex = '1';
                 // Show Cayley canvas and order display
                 cayleyCanvas.style.display = 'block';
                 cayleyCanvas.style.cursor = 'grab';
-                // Size cayley canvas
-                cayleyCanvas.width = canvasContainer.clientWidth;
-                cayleyCanvas.height = canvasContainer.clientHeight;
+                // Size cayley canvas to full viewport so it covers behind the panel
+                cayleyCanvas.width = window.innerWidth;
+                cayleyCanvas.height = window.innerHeight;
                 // Attach Zoom/Pan Listeners
                 cayleyCanvas.addEventListener('wheel', handleWheel);
                 cayleyCanvas.addEventListener('mousedown', handleMouseDown);
@@ -1245,6 +1252,18 @@ const CayleyGraph = (() => {
 
             // Initial render (just the identity)
             buildAndRender();
+
+            // On desktop, offset the graph so it is centred in the non-panel area
+            if (window.ForceGraph3D && window.innerWidth > 640) {
+                requestAnimationFrame(() => {
+                    if (globalGraph3DInstance) {
+                        const panelW = 340;
+                        globalGraph3DInstance.width(window.innerWidth - panelW);
+                        const canvas = globalGraph3DInstance.renderer().domElement;
+                        canvas.style.marginLeft = panelW + 'px';
+                    }
+                });
+            }
         }
 
         function exitCayleyMode() {
@@ -1275,6 +1294,12 @@ const CayleyGraph = (() => {
                 window.removeEventListener('mousemove', handleMouseMove);
                 window.removeEventListener('mouseup', handleMouseUp);
                 cayleyCanvas.style.cursor = '';
+                // Move canvas back to its original container
+                cayleyCanvas.style.position = '';
+                cayleyCanvas.style.left = '';
+                cayleyCanvas.style.top = '';
+                cayleyCanvas.style.zIndex = '';
+                canvasContainer.appendChild(cayleyCanvas);
             }
 
             // Show 3D canvas children
@@ -1289,6 +1314,12 @@ const CayleyGraph = (() => {
             if (globalGraph3DContainer) {
                 globalGraph3DContainer.style.display = 'none';
                 if (globalGraph3DInstance) {
+                    // Reset graph width to full viewport for next time
+                    if (window.ForceGraph3D) {
+                        globalGraph3DInstance.width(window.innerWidth);
+                        const canvas = globalGraph3DInstance.renderer().domElement;
+                        canvas.style.marginLeft = '0';
+                    }
                     // Clear data to remove nodes/links from the scene
                     globalGraph3DInstance.graphData({ nodes: [], links: [] });
                 }
@@ -1379,9 +1410,8 @@ const CayleyGraph = (() => {
         window.addEventListener('mouseup', handleMouseUp);
 
         function handleResize() {
-            // Recalculate canvas size if container changes
-            cayleyCanvas.width = canvasContainer.clientWidth;
-            cayleyCanvas.height = canvasContainer.clientHeight;
+            cayleyCanvas.width = window.innerWidth;
+            cayleyCanvas.height = window.innerHeight;
             draw();
         }
 
