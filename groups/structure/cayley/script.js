@@ -2440,7 +2440,29 @@ function render3DCayleyGraph(parent, elements, multiplicationTable, generators, 
 
 
 selector.addEventListener('change', () => loadGroup(selector.value));
-window.addEventListener('load', () => loadGroup(selector.value));
+
+// Defer initial render until the tab is visible to avoid the force simulation
+// collapsing all nodes to the centre when the page loads in a background tab.
+let initialLoadPending = false;
+
+function triggerInitialLoad() {
+    loadGroup(selector.value);
+    initialLoadPending = false;
+}
+
+window.addEventListener('load', () => {
+    if (document.hidden) {
+        initialLoadPending = true;
+    } else {
+        triggerInitialLoad();
+    }
+});
+
+document.addEventListener('visibilitychange', () => {
+    if (!document.hidden && initialLoadPending) {
+        triggerInitialLoad();
+    }
+});
 
 // Toggle Conjugacy Classes Button
 const toggleConjugacyBtn = document.getElementById('toggle-conjugacy');
