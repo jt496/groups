@@ -98,11 +98,11 @@ const GROUPS = {
         tokens: [
             { tex: '\\langle\\,' }, { gen: 't1', tex: 't_1' }, { tex: ',\\,' },
             { gen: 'gamma', tex: '\\gamma' }, { tex: '\\;\\mid\\;' },
-            { rel: 'conjt1', tex: '\\gamma t_1\\gamma^{-1}t_1' },
+            { rel: 'conjt1', tex: '\\gamma^{-1} t_1\\gamma t_1' },
             { tex: '\\,\\rangle \\quad (t_2=\\gamma^2)' }
         ],
         genMap: { t1: { type: 'trans', which: 'v1' }, gamma: { type: 'sym', idx: 1 } },
-        relSeqs: { conjt1: [{ gen: 'gamma' }, { gen: 't1' }, { gen: 'gamma', inv: true }, { gen: 't1' }] }
+        relSeqs: { conjt1: [{ gen: 'gamma', inv: true }, { gen: 't1' }, { gen: 'gamma' }, { gen: 't1' }] }
     },
     cm: {
         v1: [1, 0], v2: [0, 0.8], // Centered Rectangular
@@ -170,8 +170,7 @@ const GROUPS = {
             { rel: 's2', tex: '\\sigma^2' }, { tex: ',\\;' },
             { rel: 'conj_gamma', tex: '(\\sigma\\gamma)^2' }, { tex: ',\\;' },
             { rel: 'comm_st2', tex: '[\\sigma,t_2]' }, { tex: ',\\;' },
-            { rel: 'conj_t2', tex: '\\gamma t_2 \\gamma^{-1} t_2' },
-            { tex: '\\,\\rangle \\quad (t_1=\\gamma^2,\\; C_2=\\sigma\\gamma)' }
+            { rel: 'conj_t2', tex: '\\gamma t_2 \\gamma^{-1} t_2 \\rangle' }            
         ],
         genMap: { t2: { type: 'trans', which: 'v2' }, sigma: { type: 'sym', idx: 1 }, gamma: { type: 'sym', idx: 3 } },
         relSeqs: {
@@ -193,8 +192,7 @@ const GROUPS = {
         tokens: [
             { tex: '\\langle\\,' }, { gen: 'gamma_v', tex: '\\gamma_v' }, { tex: ',\\,' },
             { gen: 'gamma_h', tex: '\\gamma_h' }, { tex: '\\;\\mid\\;' },
-            { rel: 'cycle', tex: '(\\gamma_v\\gamma_h)^2' },
-            { tex: '\\,\\rangle \\quad (t_1=\\gamma_h^2,\\; t_2=\\gamma_v^2)' }
+            { rel: 'cycle', tex: '(\\gamma_v\\gamma_h)^2 \\rangle' }
         ],
         genMap: { gamma_v: { type: 'sym', idx: 1 }, gamma_h: { type: 'sym', idx: 3 } },
         relSeqs: { cycle: [{ gen: 'gamma_v' }, { gen: 'gamma_h' }, { gen: 'gamma_v' }, { gen: 'gamma_h' }] }
@@ -296,8 +294,7 @@ const GROUPS = {
             { rel: 'conjt2_C4', tex: 'C_4 t_2 C_4^{-1}t_1^{-1}' }, { tex: ',\\;' },
             { rel: 'conjt1_s', tex: '\\sigma t_1\\sigma t_2^{-1}' }, { tex: ',\\;' },
             { rel: 'conjt2_s', tex: '\\sigma t_2\\sigma t_1^{-1}' }, { tex: ',\\;' },
-            { rel: 'conj_C4_s', tex: '\\sigma C_4\\sigma C_4 t_2' }, { tex: '\\,\\rangle' },
-            { tex: '\\quad (\\gamma_1 = C_4^{-1}\\sigma t_1,\\; \\gamma_2 = \\sigma C_4^{-1})' }
+            { rel: 'conj_C4_s', tex: '\\sigma C_4\\sigma C_4 t_2' }, { tex: '\\,\\rangle' }
         ],
         genMap: { t1: { type: 'trans', which: 'v1' }, t2: { type: 'trans', which: 'v2' }, C4: { type: 'sym', idx: 1 }, sigma: { type: 'sym', idx: 4 } },
         relSeqs: {
