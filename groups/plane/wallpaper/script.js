@@ -35,7 +35,7 @@ const GROUPS = {
     p1: {
         v1: [1, 0], v2: [0.3, 0.8],
         syms: [{ type: 'id', label: 'e' }],
-        desc: "Translations only. (Orbifold: o)", lattice: "Parallelogrammatic",
+        desc: "Translations only. (Orbifold: o)", lattice: "Oblique",
         tokens: [
             { tex: '\\langle\\,' }, { gen: 't1', tex: 't_1' }, { tex: ',\\,' },
             { gen: 't2', tex: 't_2' }, { tex: '\\;\\mid\\;' },
@@ -50,7 +50,7 @@ const GROUPS = {
             { type: 'id', label: 'e' },
             { type: 'rot', angle: Math.PI, center: [0, 0], label: 'C₂', gen: true }
         ],
-        desc: "180° rotations. (Orbifold: 2222)", lattice: "Parallelogrammatic",
+        desc: "180° rotations. (Orbifold: 2222)", lattice: "Oblique",
         tokens: [
             { tex: '\\langle\\,' }, { gen: 't1', tex: 't_1' }, { tex: ',\\,' },
             { gen: 't2', tex: 't_2' }, { tex: ',\\,' }, { gen: 'C2', tex: 'C_2' }, { tex: '\\;\\mid\\;' },
@@ -208,9 +208,7 @@ const GROUPS = {
             { type: 'refl', angle: 0, center: [0, 0], label: 'σₕ', gen: true },
             { type: 'rot', angle: Math.PI, center: [0, 0], label: 'C₂' },
             { type: 'id', pre: T(0.5, 0.4), label: 't', gen: true },
-            { type: 'refl', angle: Math.PI / 2, center: [0.5, 0], pre: T(0.5, 0.4), label: 'σᵥ²' },
-            { type: 'refl', angle: 0, center: [0, 0.4], pre: T(0.5, 0.4), label: 'σₕ²' },
-            { type: 'rot', angle: Math.PI, center: [0.25, 0.2], label: 'C₂²' }
+            { type: 'rot', angle: Math.PI, center: [0.25, 0.2], label: "C₂'" }
         ],
         desc: "Perpendicular reflections in centered lattice. (Orbifold: 2*22)", lattice: "Centered Rectangular",
         tokens: [
