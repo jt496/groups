@@ -362,7 +362,8 @@ const GROUPS = {
         v1: [1, 0], v2: [0.5, Math.sqrt(3) / 2],
         syms: [
             { type: 'id', label: 'e' }, { type: 'rot', angle: 2 * Math.PI / 3, center: [0, 0], label: 'C₃', gen: true }, { type: 'rot', angle: 4 * Math.PI / 3, center: [0, 0], label: 'C₃²', power: true },
-            { type: 'refl', angle: 0, center: [0, 0], label: 'σ₁', gen: true }, { type: 'refl', angle: Math.PI / 3, center: [0, 0], label: 'σ₂' }, { type: 'refl', angle: 2 * Math.PI / 3, center: [0, 0], label: 'σ₃' }
+            { type: 'refl', angle: 0, center: [0, 0], label: 'σ₁', gen: true }, { type: 'refl', angle: Math.PI / 3, center: [0, 0], label: 'σ₂' }, { type: 'refl', angle: 2 * Math.PI / 3, center: [0, 0], label: 'σ₃' },
+            { type: 'rot', angle: 2 * Math.PI / 3, center: [0.5, Math.sqrt(3) / 6], label: "C₃'" }
         ],
         desc: "120° rotations and mirrors NOT through all centers. (Orbifold: 3*3)", lattice: "Hexagonal",
         tokens: [
