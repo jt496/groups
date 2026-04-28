@@ -465,7 +465,27 @@
         .scene-tooltip b {
             color: #a855f7 !important;
         }
+        #toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: rgba(15, 23, 42, 0.9);
+            color: #38bdf8;
+            padding: 12px 24px;
+            border-radius: 8px;
+            border: 1px solid #38bdf8;
+            z-index: 1000;
+            transition: transform 0.3s ease;
+            pointer-events: none;
+        }
+
+        #toast.show {
+            transform: translateX(-50%) translateY(0);
+        }
     </style>
+
+    <div id="toast">TikZ code copied to clipboard!</div>
 
     <div id="graph-container">
         <canvas id="fallback-canvas" aria-label="3D Cayley graph visualisation (drag to rotate, scroll to zoom)"></canvas>

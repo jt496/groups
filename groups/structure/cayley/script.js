@@ -2533,3 +2533,123 @@ if (resetCameraBtn) {
         }
     });
 }
+
+// --------------------------------------------------
+// TikZ Export Logic
+// --------------------------------------------------
+
+function colorToTikZ(color) {
+    if (!color) return "black";
+    if (color.startsWith('#')) return color.substring(1);
+    
+    // Handle HSL or other formats by using a temporary element
+    const temp = document.createElement('div');
+    temp.style.color = color;
+    document.body.appendChild(temp);
+    const rgb = window.getComputedStyle(temp).color;
+    document.body.removeChild(temp);
+    
+    const match = rgb.match(/\d+/g);
+    if (!match) return "000000";
+    return match.slice(0, 3).map(x => parseInt(x).toString(16).padStart(2, '0')).join('').toUpperCase();
+}
+
+function showToast(message) {
+    const toast = document.getElementById('toast');
+    if (!toast) return;
+    toast.textContent = message;
+    toast.classList.add('show');
+    setTimeout(() => {
+        toast.classList.remove('show');
+    }, 3000);
+}
+
+function exportToTikZ() {
+    if (!graph3DInstance) {
+        showToast("3D Graph not initialized.");
+        return;
+    }
+
+    const { nodes, links } = graph3DInstance.graphData();
+    if (!nodes || nodes.length === 0) {
+        showToast("No data to export.");
+        return;
+    }
+
+    let tikz = "% TikZ Export from Cayley Graph Explorer\n";
+    tikz += "% Requirement: \\usepackage{tikz}\n";
+    tikz += "\\begin{tikzpicture}[scale=0.08, line join=round, line cap=round, x={(1cm,0cm)}, y={(0cm,1cm)}, z={(-0.5cm,-0.5cm)}]\n";
+
+    // Define colors
+    const colorMap = new Map();
+    const definedColors = new Set();
+
+    function defineTikZColor(color) {
+        const hex = colorToTikZ(color);
+        const name = "c" + hex;
+        if (!definedColors.has(name)) {
+            tikz += "  \\definecolor{" + name + "}{HTML}{" + hex + "}\n";
+            definedColors.add(name);
+        }
+        return name;
+    }
+
+    tikz += "\n  % Edges\n";
+    links.forEach(link => {
+        const source = nodes.find(n => (n.id === (link.source.id ?? link.source)));
+        const target = nodes.find(n => (n.id === (link.target.id ?? link.target)));
+        if (!source || !target) return;
+
+        const colorName = defineTikZColor(link.color || "#cccccc");
+        const arrow = link.isUndirected ? "-" : "-stealth";
+        
+        tikz += "  \\draw[" + colorName + ", " + arrow + ", very thick] (" + source.x.toFixed(2) + ", " + source.y.toFixed(2) + ", " + source.z.toFixed(2) + ") -- (" + target.x.toFixed(2) + ", " + target.y.toFixed(2) + ", " + target.z.toFixed(2) + ");\n";
+    });
+
+    tikz += "\n  % Nodes\n";
+    nodes.forEach(node => {
+        const color = node.color || (node.isIdentity ? "#fbbf24" : "#38bdf8");
+        const colorName = defineTikZColor(color);
+        tikz += "  \\shade[ball color=" + colorName + "] (" + node.x.toFixed(2) + ", " + node.y.toFixed(2) + ", " + node.z.toFixed(2) + ") circle (100pt);\n";
+    });
+
+    tikz += "\\end{tikzpicture}\n";
+
+    function fallbackCopyToClipboard(text) {
+        const textArea = document.createElement("textarea");
+        textArea.value = text;
+        textArea.style.position = "fixed";
+        textArea.style.left = "-9999px";
+        textArea.style.top = "0";
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        try {
+            const successful = document.execCommand('copy');
+            if (successful) showToast("TikZ code copied to clipboard!");
+            else showToast("Unable to copy TikZ code.");
+        } catch (err) {
+            console.error("Fallback copy failed:", err);
+            showToast("Failed to copy. See console.");
+        }
+        document.body.removeChild(textArea);
+    }
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(tikz).then(() => {
+            showToast("TikZ code copied to clipboard!");
+        }).catch(err => {
+            console.error("Clipboard API failed, trying fallback:", err);
+            fallbackCopyToClipboard(tikz);
+        });
+    } else {
+        fallbackCopyToClipboard(tikz);
+    }
+}
+
+window.addEventListener('keydown', (e) => {
+    if (e.ctrlKey && e.shiftKey && e.code === 'KeyX') {
+        e.preventDefault();
+        exportToTikZ();
+    }
+});
